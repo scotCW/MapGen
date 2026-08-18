@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "scope": "colorado",
+  "description": "Colorado-specific land access classification rules. These override national defaults where Colorado has more specific data or different rules. Sources: Colorado Parks and Wildlife (CPW), Colorado State Land Board (CSLB), WGFD. Rules receive a +1000 priority boost over national rules.",
+  "rules": [
+    {
+      "id": "co_swa_open",
+      "category": "huntable",
+      "source_dataset": "Colorado Parks & Wildlife — State Wildlife Areas",
+      "note": "Colorado State Wildlife Areas (SWAs) are managed by CPW primarily for hunting and fishing. Hunting is generally open to licensed hunters. Verify current SWA-specific regulations, as some have seasonal restrictions, special-permit requirements, or portions closed for wildlife management.",
+      "priority": 85,
+      "match": [
+        { "field": "Mang_Name", "op": "eq", "value": "STAT" },
+        { "field": "Des_Tp",    "op": "eq", "value": "SWA" }
+      ],
+      "match_any": []
+    },
+    {
+      "id": "co_walk_in",
+      "category": "huntable",
+      "source_dataset": "Colorado Parks & Wildlife — Walk-In Access / Public Access Program",
+      "note": "This property is enrolled in CPW's Walk-In Access or Public Access Program, making it open to hunting during the designated season. Access is seasonal — verify current enrollment dates with CPW. Program participation changes annually.",
+      "priority": 83,
+      "match": [],
+      "match_any": [
+        { "field": "Des_Tp", "op": "eq",       "value": "WIAC" },
+        { "field": "Des_Tp", "op": "contains",  "value": "Walk-In" },
+        { "field": "Des_Tp", "op": "contains",  "value": "Public Access" }
+      ]
+    },
+    {
+      "id": "co_cpw_lease",
+      "category": "huntable",
+      "source_dataset": "Colorado State Land Board / Colorado Parks & Wildlife — Public Access Lease",
+      "note": "This State Trust Land parcel is under a CPW public-access lease, opening it to hunting and fishing. State Trust Land is Category 3 by default — upgrade to Category 1 only where this lease is confirmed in CPW's access dataset.",
+      "priority": 82,
+      "match": [
+        { "field": "Mang_Name",  "op": "eq", "value": "STAT" },
+        { "field": "CPW_Access", "op": "eq", "value": "Yes" }
+      ],
+      "match_any": []
+    },
+    {
+      "id": "co_state_trust_default",
+      "category": "closed",
+      "source_dataset": "Colorado State Land Board — State Trust Land",
+      "note": "Colorado State Trust Land is managed for revenue generation (grazing, mineral leases, timber). It is closed to public access by default — Category 3. It is upgraded to Category 1 only where CPW holds a confirmed public-access lease (see co_cpw_lease rule). Do not assume state trust land is open.",
+      "priority": 78,
+      "match": [
+        { "field": "Mang_Name", "op": "eq", "value": "STAT" },
+        { "field": "State",     "op": "eq", "value": "CO" }
+      ],
+      "match_any": []
+    },
+    {
+      "id": "co_gmu",
+      "category": "unknown",
+      "source_dataset": "Colorado Parks & Wildlife — Game Management Units",
+      "note": "This polygon represents a Game Management Unit (GMU) boundary. GMU boundaries define where specific licenses are valid, but they are not land ownership or access boundaries. Access depends on the underlying land ownership — GMU membership alone does not grant hunting access.",
+      "priority": 50,
+      "match": [
+        { "field": "Des_Tp", "op": "eq", "value": "GMU" }
+      ],
+      "match_any": []
+    }
+  ]
+}

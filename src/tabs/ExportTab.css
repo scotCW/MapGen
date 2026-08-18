@@ -1,0 +1,654 @@
+.export-tab {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--surface);
+}
+
+.export-inner {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.export-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+
+.export-section {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.export-section:last-child {
+  border-bottom: none;
+}
+
+.export-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 14px;
+  color: var(--text);
+}
+
+/* ── Info grid ────────────────────────────────────────────────────────────── */
+
+.export-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.export-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.export-info-label {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 100px;
+}
+
+.export-info-value {
+  color: var(--text);
+  text-align: right;
+  word-break: break-all;
+}
+
+.export-info-note {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.export-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Generate button ──────────────────────────────────────────────────────── */
+
+.export-generate-btn {
+  display: block;
+  width: 100%;
+  padding: 13px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent, #3a7bd5);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.export-generate-btn:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.export-generate-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Progress ─────────────────────────────────────────────────────────────── */
+
+.export-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+}
+
+.export-progress-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent, #3a7bd5);
+  border-radius: 50%;
+  animation: export-spin 0.8s linear infinite;
+}
+
+@keyframes export-spin {
+  to { transform: rotate(360deg); }
+}
+
+.export-progress-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.export-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 5px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.export-step--active {
+  color: var(--accent, #3a7bd5);
+  background: rgba(58, 123, 213, 0.07);
+  font-weight: 600;
+}
+
+.export-step--done {
+  color: #2e7d32;
+}
+
+.export-step-indicator {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.export-cancel-btn {
+  margin-top: 4px;
+  padding: 6px 16px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.export-cancel-btn:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+/* ── Done state ───────────────────────────────────────────────────────────── */
+
+.export-done {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.export-done-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2e7d32;
+  color: #fff;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.export-done-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.export-done-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.export-done-path {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.export-done-fullpath {
+  font-size: 11px;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.export-done-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.export-reveal-btn {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent, #3a7bd5);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.export-reveal-btn:hover {
+  opacity: 0.88;
+}
+
+.export-again-btn {
+  padding: 7px 16px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.export-again-btn:hover {
+  background: var(--border);
+}
+
+/* ── Error state ──────────────────────────────────────────────────────────── */
+
+.export-error {
+  background: rgba(198, 40, 40, 0.07);
+  border: 1px solid rgba(198, 40, 40, 0.3);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-error-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c62828;
+}
+
+.export-error-msg {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.export-retry-btn {
+  align-self: flex-start;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(198, 40, 40, 0.4);
+  border-radius: 5px;
+  background: transparent;
+  color: #c62828;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.export-retry-btn:hover {
+  background: rgba(198, 40, 40, 0.08);
+}
+
+.export-step-pct {
+  margin-left: 6px;
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+/* ── Export fields ────────────────────────────────────────────────────────── */
+
+.export-field {
+  margin-bottom: 18px;
+}
+
+.export-field:last-of-type {
+  margin-bottom: 0;
+}
+
+.export-field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 7px;
+}
+
+.export-field-note {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11px;
+}
+
+/* ── DPI selector ─────────────────────────────────────────────────────────── */
+
+.export-dpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.export-dpi-header .export-field-label {
+  margin-bottom: 0;
+}
+
+.export-dpi-lock {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.export-dpi-lock input {
+  cursor: pointer;
+}
+
+.export-dpi-slider {
+  width: 100%;
+  display: block;
+  accent-color: var(--accent, #3a7bd5);
+  cursor: pointer;
+}
+
+.export-dpi-slider:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.export-dpi-ticks {
+  position: relative;
+  height: 14px;
+  margin-top: 2px;
+}
+
+.export-dpi-tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.export-dpi-tick--active {
+  color: var(--accent, #3a7bd5);
+  font-weight: 700;
+}
+
+.export-dpi-readout {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.export-dpi-readout strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Output mode ──────────────────────────────────────────────────────────── */
+
+.export-mode-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.export-mode-opt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.export-mode-opt--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Output folder ────────────────────────────────────────────────────────── */
+
+.export-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.export-folder-path {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--surface-raised, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.export-folder-default {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.export-folder-btn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-raised, var(--surface));
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.export-folder-btn:hover:not(:disabled) {
+  background: var(--hover, var(--border));
+}
+
+.export-folder-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.export-folder-clear {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, color 0.1s;
+}
+
+.export-folder-clear:hover:not(:disabled) {
+  background: var(--hover, rgba(0,0,0,0.07));
+  color: var(--text);
+}
+
+/* ── Filename pattern ─────────────────────────────────────────────────────── */
+
+.export-pattern-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: monospace;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-raised, var(--surface));
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.1s;
+}
+
+.export-pattern-input:focus {
+  border-color: var(--accent, #3a7bd5);
+}
+
+.export-pattern-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-token-row {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.export-token-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-family: monospace;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-raised, var(--surface));
+  color: var(--accent, #3a7bd5);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.export-token-btn:hover:not(:disabled) {
+  background: var(--hover, rgba(58,123,213,0.07));
+}
+
+.export-token-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.export-pattern-preview {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.export-pattern-preview-label {
+  font-weight: 600;
+}
+
+.export-pattern-preview-note {
+  opacity: 0.7;
+}
+
+/* ── Auto-open checkbox ────────────────────────────────────────────────────── */
+
+.export-autoopen {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  margin-top: 14px;
+}
+
+/* ── Export history ───────────────────────────────────────────────────────── */
+
+.export-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.export-history-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+.export-history-row:last-child {
+  border-bottom: none;
+}
+
+.export-history-row:hover {
+  background: var(--hover, rgba(0,0,0,0.03));
+}
+
+.export-history-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.export-history-filename {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.export-history-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.export-history-reveal {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+}
+
+.export-history-reveal:hover {
+  background: var(--hover, rgba(0,0,0,0.06));
+  color: var(--text);
+}

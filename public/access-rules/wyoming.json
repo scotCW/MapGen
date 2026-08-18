@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "scope": "wyoming",
+  "description": "Wyoming-specific land access classification rules. These override national defaults where Wyoming has more specific data. Sources: Wyoming Game and Fish Department (WGFD), Wyoming Office of State Lands and Investments (OSLI). Rules receive a +1000 priority boost over national rules.",
+  "rules": [
+    {
+      "id": "wy_hma",
+      "category": "huntable",
+      "source_dataset": "Wyoming Game & Fish Department — Hunter Management Areas",
+      "note": "Wyoming Hunter Management Areas (HMAs) are private lands where WGFD holds access agreements for hunting. Access is permitted for licensed hunters during the agreement period. HMA enrollment changes annually — verify current boundaries and rules with WGFD before hunting.",
+      "priority": 85,
+      "match": [],
+      "match_any": [
+        { "field": "Des_Tp", "op": "eq",       "value": "HMA" },
+        { "field": "Des_Tp", "op": "contains",  "value": "Hunter Management" }
+      ]
+    },
+    {
+      "id": "wy_walk_in",
+      "category": "huntable",
+      "source_dataset": "Wyoming Game & Fish Department — Walk-In Areas",
+      "note": "Wyoming Walk-In Area program lands are private properties with WGFD access agreements, open to hunting during the program season. Access is seasonal and enrollment changes annually — verify current Walk-In Area maps from WGFD.",
+      "priority": 84,
+      "match": [],
+      "match_any": [
+        { "field": "Des_Tp", "op": "eq",       "value": "WIAC" },
+        { "field": "Des_Tp", "op": "contains",  "value": "Walk-In" }
+      ]
+    },
+    {
+      "id": "wy_state_trust_open",
+      "category": "huntable",
+      "source_dataset": "Wyoming Office of State Lands and Investments — State Trust Land",
+      "note": "Wyoming State Trust Land is generally open to public access and hunting under Wyoming state law (W.S. 36-5-105), unlike Colorado where state trust land defaults to closed. Verify that the specific parcel has not been closed by a grazing lease or other state order restricting access.",
+      "priority": 78,
+      "match": [
+        { "field": "Mang_Name", "op": "eq", "value": "STAT" },
+        { "field": "State",     "op": "eq", "value": "WY" }
+      ],
+      "match_any": []
+    },
+    {
+      "id": "wy_public_access_easement",
+      "category": "huntable",
+      "source_dataset": "Wyoming Game & Fish Department — Public Access Easements",
+      "note": "This parcel has a public access easement held by WGFD, making it open to the public for hunting and recreation even though underlying ownership may be private. Verify easement terms and boundaries with WGFD.",
+      "priority": 82,
+      "match": [
+        { "field": "Des_Tp", "op": "contains", "value": "Easement" },
+        { "field": "Mang_Name", "op": "eq",    "value": "STAT" }
+      ],
+      "match_any": []
+    },
+    {
+      "id": "wy_checkerboard",
+      "category": "unknown",
+      "source_dataset": "PAD-US / Wyoming GIS",
+      "note": "Checkerboard land ownership is common in Wyoming — alternating sections of BLM and private land in a grid pattern. Corner-crossing between diagonally adjacent BLM sections is legally contested. This polygon is in a checkerboard area; verify access carefully and consult current legal guidance before hunting near private corners.",
+      "priority": 45,
+      "match": [
+        { "field": "Checkerboard", "op": "eq", "value": "Yes" }
+      ],
+      "match_any": []
+    }
+  ]
+}

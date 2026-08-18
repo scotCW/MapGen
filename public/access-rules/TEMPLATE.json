@@ -1,0 +1,63 @@
+{
+  "_comment": "Access classification rules template for a new U.S. state. Copy this file to access-rules/<statename>.json (e.g. access-rules/montana.json). State rules receive a +1000 priority boost over national rules in _national.json, so they always win when they match. No code changes required to add a state.",
+
+  "version": 1,
+  "scope": "your_state_lowercase",
+  "_comment_scope": "Lowercase state name, matching the filename without .json (e.g. montana).",
+
+  "description": "One sentence describing the rule sources and key data providers for this state.",
+
+  "rules": [
+    {
+      "_comment": "One rule object per classification decision. Rules are evaluated in descending priority order. The highest-priority matching rule wins. Ties go to Unknown (Category 5) — ambiguity always fails toward safe.",
+
+      "id": "globally_unique_rule_id",
+      "_comment_id": "Lowercase, underscores. Must be unique across ALL rule files (prefix with state abbreviation, e.g. mt_walk_in).",
+
+      "category": "huntable",
+      "_comment_category": "One of: huntable | no_hunting | closed | private | unknown",
+
+      "source_dataset": "Agency Name — Dataset Name (Version)",
+      "_comment_source_dataset": "Displayed in the click-to-inspect popup so users know which dataset drove the classification.",
+
+      "note": "Plain-English explanation of WHY this rule assigns this category. Tell the user what to verify. This text appears in the inspection popup.",
+
+      "priority": 85,
+      "_comment_priority": "Integer 1–99 for state rules (they are boosted to 1001–1099 at runtime, beating all national rules). Higher = evaluated first. Use 85–90 for primary access rules, 78–82 for default/fallback state rules, 40–60 for advisory overlays (e.g. checkerboard).",
+
+      "match": [
+        {
+          "_comment": "ALL conditions in match[] must be true (logical AND).",
+          "field": "Mang_Name",
+          "_comment_field": "GeoJSON attribute field name from the source dataset.",
+          "op": "eq",
+          "_comment_op": "Comparison operator: eq (equals) | neq (not equals) | contains (substring) | startsWith | endsWith | exists (field is present) | blank (field missing or empty)",
+          "value": "AGENCY_CODE"
+        }
+      ],
+
+      "match_any": [
+        {
+          "_comment": "ANY one condition in match_any[] being true satisfies this block (logical OR). Both match[] AND match_any[] must be satisfied when both are non-empty.",
+          "field": "Des_Tp",
+          "op": "eq",
+          "value": "DESIGNATION_CODE"
+        }
+      ]
+    },
+
+    {
+      "_comment_example": "Example: state walk-in hunting access rule",
+      "id": "xx_walk_in",
+      "category": "huntable",
+      "source_dataset": "State Agency — Walk-In Program Dataset",
+      "note": "This property is enrolled in the state walk-in hunting access program. Access is seasonal and enrollment changes annually — verify current program maps before hunting.",
+      "priority": 84,
+      "match": [],
+      "match_any": [
+        { "field": "Des_Tp", "op": "eq",      "value": "WIAC" },
+        { "field": "Des_Tp", "op": "contains", "value": "Walk-In" }
+      ]
+    }
+  ]
+}

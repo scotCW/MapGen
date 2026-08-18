@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "stateId": "WY",
+  "stateName": "Wyoming",
+  "description": "Wyoming-specific map layers sourced from Wyoming Game & Fish Department (WGFD), Wyoming Office of State Lands and Investments (OSLI), and federal agencies. These layers are merged with the national layer config at runtime.",
+  "countyBoundarySource": {
+    "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query?where=STATE%3D'56'&outFields=COUNTY%2CNAME%2CSTATE%2CGEOID&f=geojson&outSR=4326&geometryPrecision=4&maxAllowableOffset=0.0005",
+    "nameField": "NAME",
+    "fipsField": "GEOID",
+    "stateFips": "56",
+    "attribution": "U.S. Census Bureau \u2014 TIGER/Line Web Map Service",
+    "license": "Public Domain \u2014 U.S. Government work, 17 U.S.C. \u00a7 105"
+  },
+  "groups": [
+    {
+      "id": "wy_wildlife_access",
+      "label": "Wyoming Wildlife & Access",
+      "description": "Hunter Management Areas, Walk-In Areas, and public-access easements managed by Wyoming Game & Fish Department (WGFD). Data sourced from WGFD open data.",
+      "controlType": "checkbox",
+      "layers": [
+        {
+          "id": "wy_hma",
+          "name": "Hunter Management Areas (WGFD)",
+          "description": "WGFD Hunter Management Areas are private lands with WGFD access agreements open to licensed hunters. Access is permitted during the agreement period. HMA enrollment changes annually \u2014 verify current boundaries and rules with WGFD before hunting.",
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "downloadUrl": "https://wgfd.wyo.gov/WGFD/media/content/PDF/Hunting/HMAmaps/HMA_Boundaries.geojson",
+          "attribution": "Wyoming Game & Fish Department \u2014 Hunter Management Areas",
+          "license": "Public Domain \u2014 State of Wyoming",
+          "defaultOn": false,
+          "defaultOpacity": 0.55,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "accessCategory": 1,
+          "accessRuleId": "wy_hma",
+          "style": {
+            "fillColor": "#2e7d32",
+            "fillOpacity": 0.45,
+            "strokeColor": "#1b5e20",
+            "strokeWidth": 0.75
+          }
+        },
+        {
+          "id": "wy_walk_in",
+          "name": "Walk-In Areas (WGFD)",
+          "description": "Wyoming Walk-In Area program lands \u2014 private properties with WGFD access agreements open to hunting during program season. Enrollment changes annually. Verify current maps with WGFD.",
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "downloadUrl": "https://wgfd.wyo.gov/WGFD/media/content/PDF/Hunting/Walk-In/WIA_Boundaries.geojson",
+          "attribution": "Wyoming Game & Fish Department \u2014 Walk-In Area Program",
+          "license": "Public Domain \u2014 State of Wyoming",
+          "defaultOn": false,
+          "defaultOpacity": 0.5,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "accessCategory": 1,
+          "accessRuleId": "wy_walk_in",
+          "style": {
+            "fillColor": "#4CAF50",
+            "fillOpacity": 0.4,
+            "strokeColor": "#2e7d32",
+            "strokeWidth": 0.75,
+            "strokeDash": [
+              4,
+              3
+            ]
+          }
+        },
+        {
+          "id": "wy_public_access_easements",
+          "name": "Public Access Easements (WGFD)",
+          "description": "Parcels with public access easements held by WGFD. Public may enter for hunting and recreation even though underlying ownership may be private. Verify easement terms with WGFD.",
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "downloadUrl": "https://wgfd.wyo.gov/WGFD/media/content/PDF/Hunting/Easements/PAE_Boundaries.geojson",
+          "attribution": "Wyoming Game & Fish Department \u2014 Public Access Easements",
+          "license": "Public Domain \u2014 State of Wyoming",
+          "defaultOn": false,
+          "defaultOpacity": 0.45,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "accessCategory": 1,
+          "accessRuleId": "wy_public_access_easement",
+          "style": {
+            "fillColor": "#66BB6A",
+            "fillOpacity": 0.4,
+            "strokeColor": "#388E3C",
+            "strokeWidth": 1.0,
+            "strokeDash": [
+              3,
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "wy_state_land",
+      "label": "Wyoming State Land",
+      "description": "State Trust Land managed by the Wyoming Office of State Lands and Investments (OSLI). Unlike Colorado, Wyoming state trust land is generally open to public access and hunting under Wyoming law (W.S. 36-5-105).",
+      "controlType": "checkbox",
+      "layers": [
+        {
+          "id": "wy_state_trust",
+          "name": "State Trust Land (OSLI)",
+          "description": "Wyoming State Trust Land parcels. Generally open to public hunting under Wyoming law \u2014 different from most other states. Some parcels may be closed by grazing lease or state order; verify with OSLI.",
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "downloadUrl": "https://opendata.arcgis.com/datasets/osli_state_trust_land_wy_0.geojson",
+          "attribution": "Wyoming Office of State Lands and Investments \u2014 Open Data",
+          "license": "Public Domain \u2014 State of Wyoming",
+          "defaultOn": false,
+          "defaultOpacity": 0.4,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "accessCategory": 1,
+          "accessRuleId": "wy_state_trust_open",
+          "style": {
+            "fillColor": "#81C784",
+            "fillOpacity": 0.35,
+            "strokeColor": "#4CAF50",
+            "strokeWidth": 0.75
+          }
+        }
+      ]
+    },
+    {
+      "id": "wy_hunting_units",
+      "label": "Wyoming Hunting Areas",
+      "description": "WGFD Game Management District and hunting area boundaries. These define where specific licenses are valid \u2014 not land-access boundaries.",
+      "controlType": "checkbox",
+      "layers": [
+        {
+          "id": "wy_gmd",
+          "name": "Game Management Districts (WGFD)",
+          "description": "Wyoming Game Management Districts for deer, elk, antelope, and other big game species. Your license is valid in specific districts \u2014 verify your district before hunting.",
+          "sourceType": "geojson",
+          "renderType": "line",
+          "downloadUrl": "https://wgfd.wyo.gov/WGFD/media/content/PDF/Hunting/Units/WY_GameManagementDistricts.geojson",
+          "attribution": "Wyoming Game & Fish Department \u2014 Game Management Districts",
+          "license": "Public Domain \u2014 State of Wyoming",
+          "defaultOn": false,
+          "defaultOpacity": 0.85,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": {
+            "strokeColor": "#6A1B9A",
+            "strokeWidth": 1.5,
+            "strokeDash": [
+              8,
+              4
+            ]
+          }
+        },
+        {
+          "id": "wy_checkerboard",
+          "name": "Checkerboard Ownership",
+          "description": "Wyoming checkerboard land \u2014 alternating BLM/private sections common in southwest Wyoming. Corner-crossing legality between diagonal BLM sections is contested. Shown to flag areas requiring extra care.",
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "downloadUrl": "https://opendata.arcgis.com/datasets/wy_checkerboard_land_0.geojson",
+          "attribution": "BLM Wyoming \u2014 Land Ownership; Wyoming GIS",
+          "license": "Public Domain \u2014 U.S. Government work, 17 U.S.C. \u00a7 105",
+          "defaultOn": false,
+          "defaultOpacity": 0.3,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "accessCategory": 5,
+          "accessRuleId": "wy_checkerboard",
+          "style": {
+            "fillColor": "#FF8F00",
+            "fillOpacity": 0.25,
+            "strokeColor": "#E65100",
+            "strokeWidth": 0.5,
+            "pattern": "diagonal-hatch"
+          }
+        }
+      ]
+    }
+  ]
+}

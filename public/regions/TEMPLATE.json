@@ -1,0 +1,68 @@
+{
+  "_comment": "Region config template for a new U.S. state. Copy this file to regions/<statename>.json (e.g. regions/montana.json), fill in the fields below, then add an entry to regions/_states.json. No code changes required.",
+  "schemaVersion": 1,
+  "stateId": "_comment: 2-letter FIPS abbreviation, e.g. MT",
+  "stateName": "_comment: Full state name, e.g. Montana",
+  "description": "_comment: One-sentence description of the data sources for this state.",
+  "countyBoundarySource": {
+    "_comment": "Used by the Data screen (Stage 19) to draw the interactive county download map. Point to a public GeoJSON endpoint returning county polygons for this state. The Census TIGER REST API works for all 50 states \u2014 change the STATE filter to your state's 2-digit FIPS code.",
+    "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query?where=STATE%3D'XX'&outFields=COUNTY%2CNAME%2CSTATE%2CGEOID&f=geojson&outSR=4326&geometryPrecision=4&maxAllowableOffset=0.0005",
+    "nameField": "NAME",
+    "fipsField": "GEOID",
+    "stateFips": "XX",
+    "attribution": "U.S. Census Bureau \u2014 TIGER/Line Web Map Service",
+    "license": "Public Domain \u2014 U.S. Government work, 17 U.S.C. \u00a7 105"
+  },
+  "groups": [
+    {
+      "_comment": "A group is a section in the Layers panel. Each group has a label, description, controlType, and a list of layers.",
+      "id": "state_unique_group_id",
+      "label": "Human-readable group name shown in Layers panel",
+      "description": "One sentence about what these layers show and their source.",
+      "controlType": "checkbox",
+      "layers": [
+        {
+          "_comment": "One entry per downloadable or streamable layer. All fields documented below.",
+          "id": "globally_unique_layer_id",
+          "name": "Short name shown in Layers panel (e.g. Walk-In Areas (WGFD))",
+          "description": "Plain-English explanation shown under the layer name. Include what it shows, who manages it, and what the user should verify before hunting.",
+          "sourceType": "geojson",
+          "_comment_sourceType": "Accepted values: geojson | xyz | wmts | shapefile",
+          "renderType": "fill",
+          "_comment_renderType": "Accepted values: fill (polygons) | line (roads/trails/boundaries) | circle (points) | raster (XYZ/WMTS tiles)",
+          "downloadUrl": "https://example.gov/open-data/layer.geojson",
+          "_comment_downloadUrl": "URL for the Stage 19 download manager to fetch. Must be a direct GeoJSON (or MBTiles for rasters) URL. Set to null if the layer is derived from another (dependsOn).",
+          "attribution": "Agency Name \u2014 Dataset Name",
+          "license": "License string shown in attribution panel (e.g. Public Domain \u2014 State of Montana)",
+          "defaultOn": false,
+          "_comment_defaultOn": "Whether this layer is enabled by default in new projects.",
+          "defaultOpacity": 0.5,
+          "_comment_defaultOpacity": "Initial opacity (0.0\u20131.0) for new projects.",
+          "onlineOnly": false,
+          "_comment_onlineOnly": "true = can only stream live (e.g. raster XYZ tile layer). false = requires local download.",
+          "downloadable": true,
+          "_comment_downloadable": "true = user can download this layer for offline use via the Data screen.",
+          "requiresDownload": true,
+          "_comment_requiresDownload": "true = layer cannot render without a local download (e.g. GeoJSON data). false = can stream live.",
+          "accessCategory": null,
+          "_comment_accessCategory": "Set to 1-5 if this layer corresponds to an access category. Null for non-access layers. 0 = access routes.",
+          "accessRuleId": null,
+          "_comment_accessRuleId": "ID of the rule in access-rules/<state>.json that classifies this layer. Null for non-access layers.",
+          "dependsOn": null,
+          "_comment_dependsOn": "Layer ID this layer depends on (e.g. label layer depends on boundary layer). Null if independent.",
+          "style": {
+            "_comment": "Default rendering style. Applied when no user customization is active.",
+            "fillColor": "#2e7d32",
+            "fillOpacity": 0.45,
+            "strokeColor": "#1b5e20",
+            "strokeWidth": 0.75,
+            "strokeDash": null,
+            "_comment_strokeDash": "Array [dashLen, gapLen] for dashed lines, e.g. [4, 3]. Null for solid lines.",
+            "pattern": "solid",
+            "_comment_pattern": "Fill pattern: solid | diagonal-hatch | cross-hatch | dots | none"
+          }
+        }
+      ]
+    }
+  ]
+}

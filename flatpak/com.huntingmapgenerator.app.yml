@@ -1,0 +1,83 @@
+# Flatpak manifest for Hunting Map Generator.
+#
+# This repackages the .deb produced by `tauri build` rather than compiling from
+# source, which is the approach Tauri documents: the Rust/WebKitGTK toolchain is
+# already exercised by the deb build, so the Flatpak stays a thin wrapper.
+#
+# Build with:
+#   ./scripts/build-linux.sh --flatpak
+# or manually, after a deb build:
+#   flatpak-builder --user --install --force-clean build flatpak/com.huntingmapgenerator.app.yml
+#
+# Runtime note: Tauri v2 needs webkit2gtk-4.1 (GTK 3), which org.gnome.Platform
+# provides. If a future runtime drops it, pin back to a version that still has
+# it rather than migrating — Tauri v2 does not use the GTK 4 WebKit build.
+app-id: com.huntingmapgenerator.app
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+command: hunting-map-generator
+
+finish-args:
+  # Windowing
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  # MapLibre renders through WebGL, so the GPU must be reachable.
+  - --device=dri
+  # Map tiles and user-initiated county data downloads.
+  - --share=network
+  # Destinations for exported PDFs and .huntmap files. File pickers themselves go
+  # through the XDG portal; these keep a chosen output folder writable across
+  # sessions so the saved "output folder" setting keeps working.
+  - --filesystem=xdg-documents:rw
+  - --filesystem=xdg-download:rw
+
+modules:
+  - name: hunting-map-generator
+    buildsystem: simple
+    sources:
+      # Contents of the deb bundle directory land at the build root.
+      - type: dir
+        path: ../src-tauri/target/release/bundle/deb
+      # AppStream metadata lives beside this manifest, not inside the deb.
+      - type: file
+        path: com.huntingmapgenerator.app.metainfo.xml
+
+    build-commands:
+      # productName contains spaces, so the .deb filename does too — never let
+      # an unquoted glob reach a command here.
+      - |
+        set -eu
+        deb=""
+        for f in *.deb; do deb="$f"; break; done
+        [ -n "$deb" ] || { echo "no .deb found — run the deb build first"; exit 1; }
+        ar -x "$deb"
+        tar -xf data.tar.*
+
+      - install -Dm755 usr/bin/hunting-map-generator /app/bin/hunting-map-generator
+
+      # The desktop entry must be named for the app-id, with Exec/Icon rewritten
+      # to the in-sandbox command rather than the host paths the deb used.
+      - |
+        set -eu
+        src=""
+        for f in usr/share/applications/*.desktop; do src="$f"; break; done
+        install -Dm644 "$src" "/app/share/applications/${FLATPAK_ID}.desktop"
+        sed -i "s|^Exec=.*|Exec=hunting-map-generator|" "/app/share/applications/${FLATPAK_ID}.desktop"
+        sed -i "s|^Icon=.*|Icon=${FLATPAK_ID}|"         "/app/share/applications/${FLATPAK_ID}.desktop"
+
+      # Icons likewise get renamed to the app-id at every size the deb shipped.
+      - |
+        set -eu
+        for dir in usr/share/icons/hicolor/*/apps; do
+          [ -d "$dir" ] || continue
+          size=$(basename "$(dirname "$dir")")
+          for png in "$dir"/*.png; do
+            [ -f "$png" ] || continue
+            install -Dm644 "$png" "/app/share/icons/hicolor/${size}/apps/${FLATPAK_ID}.png"
+            break
+          done
+        done
+
+      - install -Dm644 com.huntingmapgenerator.app.metainfo.xml "/app/share/metainfo/${FLATPAK_ID}.metainfo.xml"

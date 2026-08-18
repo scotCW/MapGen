@@ -1,0 +1,109 @@
+.acc-popup {
+  position: fixed;
+  width: 280px;
+  background: var(--surface-1, #fff);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+  padding: 14px 14px 10px;
+  z-index: 8000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.acc-popup-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  color: var(--text-secondary, #666);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.acc-popup-close:hover {
+  background: var(--surface-2, #f0f0f0);
+  color: var(--text, inherit);
+}
+
+.acc-popup-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-right: 20px;
+}
+
+.acc-popup-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  margin-top: 2px;
+}
+
+.acc-popup-cat-num {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.acc-popup-cat-label {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.acc-popup-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary, #555);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.acc-popup-section {
+  border-top: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.acc-popup-section-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary, #666);
+}
+
+.acc-popup-note {
+  font-size: 12px;
+  color: var(--text, inherit);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.acc-popup-warning {
+  font-size: 11px;
+  color: var(--text-secondary, #666);
+  background: rgba(198, 40, 40, 0.07);
+  border-radius: 5px;
+  padding: 5px 8px;
+  line-height: 1.35;
+  border-top: 1px solid var(--border, rgba(0, 0, 0, 0.06));
+  margin-top: 2px;
+}
