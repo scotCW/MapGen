@@ -1,0 +1,178 @@
+/* ---------------------------------------------------------------------------
+ * NotesTab layout
+ * --------------------------------------------------------------------------- */
+
+.notes-tab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.notes-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+
+.notes-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.notes-header-left {
+  min-width: 0;
+}
+
+.notes-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 2px;
+  color: var(--text);
+}
+
+.notes-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.notes-save-status {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.notes-status {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.notes-status--saving {
+  color: var(--text-secondary);
+}
+
+.notes-status--saved {
+  color: #2e7d32;
+}
+
+.notes-status--unsaved {
+  color: #e65100;
+}
+
+/* ── Editor ───────────────────────────────────────────────────────────────── */
+
+.notes-editor-wrap {
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-editor {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  border: none;
+  outline: none;
+  background: var(--surface);
+  color: var(--text);
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Monaco, "Consolas", monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  padding: 16px 22px;
+  caret-color: var(--accent, #3a7bd5);
+}
+
+.notes-editor::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.55;
+  font-style: italic;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+
+.notes-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 22px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  background: var(--surface-2, var(--surface));
+}
+
+.notes-counts {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.notes-counts-sep {
+  opacity: 0.5;
+}
+
+.notes-print-options {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.notes-print-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.notes-font-size-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.notes-font-size-input {
+  width: 44px;
+  padding: 3px 5px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.notes-font-size-input::-webkit-outer-spin-button,
+.notes-font-size-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.notes-font-size-input:focus {
+  border-color: var(--accent, #3a7bd5);
+}

@@ -1,0 +1,357 @@
+{
+  "schemaVersion": 1,
+  "region": "national",
+  "description": "National layers available for all projects — loaded automatically. Add a state with a new regions/<state>.json file and zero code changes.",
+  "groups": [
+    {
+      "id": "basemap",
+      "label": "Basemap",
+      "description": "Background map — only one basemap is shown at a time.",
+      "controlType": "radio",
+      "layers": [
+        {
+          "id": "usgs_topo",
+          "name": "USGS Topo",
+          "description": "Official USGS topographic map with contour lines, roads, trails, and land features. The standard reference for backcountry navigation.",
+          "sourceType": "xyz",
+          "renderType": "raster",
+          "tiles": ["https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}"],
+          "tileSize": 256,
+          "minZoom": 0,
+          "maxZoom": 16,
+          "attribution": "U.S. Geological Survey — The National Map",
+          "license": "Public Domain — U.S. Government work, 17 U.S.C. § 105",
+          "defaultOn": true,
+          "defaultOpacity": 1.0,
+          "onlineOnly": true,
+          "downloadable": false
+        },
+        {
+          "id": "usgs_imagery",
+          "name": "USGS Imagery",
+          "description": "High-resolution aerial photography from the USGS National Map. Useful for scouting terrain and vegetation.",
+          "sourceType": "xyz",
+          "renderType": "raster",
+          "tiles": ["https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"],
+          "tileSize": 256,
+          "minZoom": 0,
+          "maxZoom": 16,
+          "attribution": "U.S. Geological Survey — The National Map",
+          "license": "Public Domain — U.S. Government work, 17 U.S.C. § 105",
+          "defaultOn": false,
+          "defaultOpacity": 1.0,
+          "onlineOnly": true,
+          "downloadable": false
+        },
+        {
+          "id": "usgs_imagery_topo",
+          "name": "Imagery + Topo",
+          "description": "Aerial imagery with topographic features overlaid. A hybrid view combining the best of both basemaps.",
+          "sourceType": "xyz",
+          "renderType": "raster",
+          "tiles": ["https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryTopo/MapServer/tile/{z}/{y}/{x}"],
+          "tileSize": 256,
+          "minZoom": 0,
+          "maxZoom": 16,
+          "attribution": "U.S. Geological Survey — The National Map",
+          "license": "Public Domain — U.S. Government work, 17 U.S.C. § 105",
+          "defaultOn": false,
+          "defaultOpacity": 1.0,
+          "onlineOnly": true,
+          "downloadable": false
+        }
+      ]
+    },
+    {
+      "id": "terrain",
+      "label": "Terrain",
+      "description": "Terrain visualization overlays. Stack these on top of any basemap.",
+      "controlType": "checkbox",
+      "layers": [
+        {
+          "id": "hillshade",
+          "name": "Shaded Relief",
+          "description": "3D hillshade derived from USGS 3DEP elevation data. Makes terrain readable at any zoom level.",
+          "sourceType": "xyz",
+          "renderType": "raster",
+          "tiles": ["https://basemap.nationalmap.gov/arcgis/rest/services/USGSShadedReliefOnly/MapServer/tile/{z}/{y}/{x}"],
+          "tileSize": 256,
+          "minZoom": 0,
+          "maxZoom": 16,
+          "attribution": "U.S. Geological Survey — 3DEP",
+          "license": "Public Domain — U.S. Government work, 17 U.S.C. § 105",
+          "defaultOn": false,
+          "defaultOpacity": 0.5,
+          "onlineOnly": true,
+          "downloadable": false
+        },
+        {
+          "id": "contour_lines",
+          "name": "Contour Lines",
+          "description": "Elevation contours from USGS 3DEP. Index contours are bold and labeled; intermediates are lighter.",
+          "sourceType": "geojson",
+          "renderType": "line",
+          "attribution": "U.S. Geological Survey — 3DEP",
+          "license": "Public Domain — U.S. Government work, 17 U.S.C. § 105",
+          "defaultOn": false,
+          "defaultOpacity": 0.8,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": {
+            "strokeColor": "#7b5e3a",
+            "strokeWidth": 0.8
+          }
+        },
+        {
+          "id": "slope_shading",
+          "name": "Slope Shading",
+          "description": "Colour-coded slope steepness from 3DEP elevation. Darker = steeper. Useful for route planning.",
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "attribution": "U.S. Geological Survey — 3DEP",
+          "license": "Public Domain — U.S. Government work, 17 U.S.C. § 105",
+          "defaultOn": false,
+          "defaultOpacity": 0.4,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": {
+            "fillColor": "#8B4513",
+            "fillOpacity": 0.4
+          }
+        }
+      ]
+    },
+    {
+      "id": "land_access",
+      "label": "Land Access",
+      "description": "Land access categories derived from federal and state land management data. Access categories are estimates — verify before you hunt.",
+      "controlType": "checkbox",
+      "special": "land_access",
+      "layers": [
+        {
+          "id": "lam_cat1_open_hunt",
+          "name": "Open — Hunting Allowed",
+          "description": "Public land you can enter and hunt on, subject to season and license requirements.",
+          "accessCategory": 1,
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "attribution": "PAD-US v3.0 (USGS Protected Areas Database); classification by Hunting Map Generator rules engine",
+          "license": "Public Domain — USGS PAD-US; CC0",
+          "defaultOn": true,
+          "defaultOpacity": 0.45,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": {
+            "fillColor": "#2d8653",
+            "fillOpacity": 0.45,
+            "strokeColor": "#1a6b3c",
+            "strokeWidth": 0.5,
+            "pattern": "solid"
+          }
+        },
+        {
+          "id": "lam_cat2_open_nohunt",
+          "name": "Open — No Hunting",
+          "description": "Public land you can walk on, but hunting is prohibited.",
+          "accessCategory": 2,
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "attribution": "PAD-US v3.0 (USGS Protected Areas Database); classification by Hunting Map Generator rules engine",
+          "license": "Public Domain — USGS PAD-US; CC0",
+          "defaultOn": true,
+          "defaultOpacity": 0.45,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": {
+            "fillColor": "#2563a8",
+            "fillOpacity": 0.45,
+            "strokeColor": "#1a4a85",
+            "strokeWidth": 0.5,
+            "pattern": "solid"
+          }
+        },
+        {
+          "id": "lam_cat3_closed",
+          "name": "Closed — No Public Entry",
+          "description": "Public or restricted land you may not enter at all.",
+          "accessCategory": 3,
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "attribution": "PAD-US v3.0 (USGS Protected Areas Database); classification by Hunting Map Generator rules engine",
+          "license": "Public Domain — USGS PAD-US; CC0",
+          "defaultOn": true,
+          "defaultOpacity": 0.45,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": {
+            "fillColor": "#c0392b",
+            "fillOpacity": 0.45,
+            "strokeColor": "#962d22",
+            "strokeWidth": 0.5,
+            "pattern": "solid"
+          }
+        },
+        {
+          "id": "lam_cat4_private",
+          "name": "Private Land",
+          "description": "Private property — written permission required to enter.",
+          "accessCategory": 4,
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "attribution": "PAD-US v3.0 (USGS Protected Areas Database); county parcel data; classification by Hunting Map Generator rules engine",
+          "license": "Public Domain — USGS PAD-US; CC0",
+          "defaultOn": true,
+          "defaultOpacity": 0.35,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": {
+            "fillColor": "#d4874a",
+            "fillOpacity": 0.35,
+            "strokeColor": "#b06a2a",
+            "strokeWidth": 0.5,
+            "pattern": "solid"
+          }
+        },
+        {
+          "id": "lam_cat5_unknown",
+          "name": "Unknown / Unclassified",
+          "description": "Access status could not be determined from available data. Treat as closed until independently verified.",
+          "accessCategory": 5,
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "attribution": "PAD-US v3.0 (USGS Protected Areas Database); classification by Hunting Map Generator rules engine",
+          "license": "Public Domain — USGS PAD-US; CC0",
+          "defaultOn": true,
+          "defaultOpacity": 0.35,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": {
+            "fillColor": "#8a8a8a",
+            "fillOpacity": 0.35,
+            "strokeColor": "#5a5a5a",
+            "strokeWidth": 0.5,
+            "pattern": "diagonal-hatch"
+          }
+        },
+        {
+          "id": "lam_access_routes",
+          "name": "Public Access Routes",
+          "description": "Roads, trails, and easements the public may legally travel, including routes crossing private land.",
+          "accessCategory": 0,
+          "sourceType": "geojson",
+          "renderType": "line",
+          "attribution": "USFS Motor Vehicle Use Map (MVUM); USGS National Map; WGFD and county easement data",
+          "license": "Public Domain — U.S. Government work, 17 U.S.C. § 105",
+          "defaultOn": false,
+          "defaultOpacity": 0.85,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": {
+            "strokeColor": "#7b35c7",
+            "strokeWidth": 1.5,
+            "strokeDash": [4, 3]
+          }
+        }
+      ]
+    },
+    {
+      "id": "features",
+      "label": "Features",
+      "description": "Roads, trails, and water drawn on top of the basemap.",
+      "controlType": "checkbox",
+      "layers": [
+        {
+          "id": "roads",
+          "name": "Roads",
+          "description": "Road network from USGS National Map and OpenStreetMap — paved, gravel, and unimproved roads.",
+          "sourceType": "geojson",
+          "renderType": "line",
+          "attribution": "U.S. Geological Survey, The National Map Transportation; © OpenStreetMap contributors (ODbL)",
+          "license": "Public Domain (USGS); Open Database Licence (OSM)",
+          "defaultOn": false,
+          "defaultOpacity": 0.8,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": { "strokeColor": "#555555", "strokeWidth": 1.0 }
+        },
+        {
+          "id": "trails",
+          "name": "Trails",
+          "description": "Hiking and foot trails from USGS National Map and OpenStreetMap.",
+          "sourceType": "geojson",
+          "renderType": "line",
+          "attribution": "U.S. Geological Survey, The National Map; © OpenStreetMap contributors (ODbL)",
+          "license": "Public Domain (USGS); Open Database Licence (OSM)",
+          "defaultOn": false,
+          "defaultOpacity": 0.8,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": { "strokeColor": "#8a5c2e", "strokeWidth": 0.8 }
+        },
+        {
+          "id": "mvum",
+          "name": "Motor Vehicle Routes (MVUM)",
+          "description": "USFS Motor Vehicle Use Map — roads and trails open to motorized use on National Forest land.",
+          "sourceType": "geojson",
+          "renderType": "line",
+          "attribution": "USDA Forest Service — Motor Vehicle Use Map",
+          "license": "Public Domain — U.S. Government work, 17 U.S.C. § 105",
+          "defaultOn": false,
+          "defaultOpacity": 0.85,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": { "strokeColor": "#e67e22", "strokeWidth": 1.2 }
+        },
+        {
+          "id": "water",
+          "name": "Water Features",
+          "description": "Rivers, streams, lakes, and wetlands from the USGS National Hydrography Dataset (NHD).",
+          "sourceType": "geojson",
+          "renderType": "line",
+          "attribution": "U.S. Geological Survey — National Hydrography Dataset (NHD)",
+          "license": "Public Domain — U.S. Government work, 17 U.S.C. § 105",
+          "defaultOn": false,
+          "defaultOpacity": 0.8,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": { "strokeColor": "#2980b9", "strokeWidth": 0.8 }
+        }
+      ]
+    },
+    {
+      "id": "boundaries",
+      "label": "Boundaries",
+      "description": "Administrative and management boundary lines.",
+      "controlType": "checkbox",
+      "layers": [
+        {
+          "id": "pad_us_boundaries",
+          "name": "Land Management Boundaries",
+          "description": "Federal and state managed land boundary lines from PAD-US. Shows where different agencies manage land.",
+          "sourceType": "geojson",
+          "renderType": "line",
+          "attribution": "U.S. Geological Survey — Protected Areas Database of the US (PAD-US) v3.0",
+          "license": "Public Domain — U.S. Government work, 17 U.S.C. § 105",
+          "defaultOn": false,
+          "defaultOpacity": 0.75,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": { "strokeColor": "#444444", "strokeWidth": 1.0 }
+        }
+      ]
+    }
+  ]
+}

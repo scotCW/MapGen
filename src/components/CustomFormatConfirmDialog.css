@@ -1,0 +1,75 @@
+.cfc-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--color-scrim, rgba(0, 0, 0, 0.55));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9100; /* above the area-tab search panel and its own overlays */
+  backdrop-filter: blur(3px);
+}
+
+.cfc-modal {
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #1a1710);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.35));
+  max-width: 420px;
+  width: calc(100% - 32px);
+  padding: 24px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cfc-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.25;
+  color: var(--color-text, #1a1710);
+}
+
+.cfc-body {
+  font-size: 13px;
+  color: var(--color-text-2, #565248);
+  margin: 0;
+  line-height: 1.55;
+}
+
+.cfc-body strong {
+  color: var(--color-text, #1a1710);
+}
+
+.cfc-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cfc-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.cfc-btn--secondary {
+  background: var(--color-surface-2, #eeece6);
+  color: var(--color-text, #1a1710);
+  border-color: var(--color-border, #ccc8bc);
+}
+.cfc-btn--secondary:hover {
+  background: var(--color-surface-3, #e5e2d8);
+}
+
+.cfc-btn--primary {
+  background: var(--color-accent, #256638);
+  color: var(--color-accent-text, #fff);
+}
+.cfc-btn--primary:hover {
+  background: var(--color-accent-hover, #1b4e2a);
+}

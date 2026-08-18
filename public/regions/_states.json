@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "description": "Manifest of available state region configs. To add a new state: create public/regions/<filename>.json and public/access-rules/<filename>.json, then add an entry here. No code changes required.",
+  "states": [
+    {
+      "id": "CO",
+      "name": "Colorado",
+      "file": "colorado"
+    },
+    {
+      "id": "WY",
+      "name": "Wyoming",
+      "file": "wyoming"
+    }
+  ]
+}

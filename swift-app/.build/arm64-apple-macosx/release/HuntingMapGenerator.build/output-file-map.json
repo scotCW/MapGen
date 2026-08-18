@@ -1,0 +1,79 @@
+{
+  "": {
+    "dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/HuntingMapGenerator.d",
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/HuntingMapGenerator.o",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/master.swiftdeps"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/AppDelegate.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/AppDelegate.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/AppDelegate~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/AppDelegate.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/AppDelegate.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/Data.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Data.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Data~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Data.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Data.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/Exports.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Exports.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Exports~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Exports.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Exports.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/IPCHandler.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/IPCHandler.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/IPCHandler~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/IPCHandler.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/IPCHandler.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/MapGenSchemeHandler.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/MapGenSchemeHandler.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/MapGenSchemeHandler~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/MapGenSchemeHandler.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/MapGenSchemeHandler.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/MapGenViewController.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/MapGenViewController.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/MapGenViewController~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/MapGenViewController.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/MapGenViewController.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/Presets.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Presets.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Presets~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Presets.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Presets.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/Projects.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Projects.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Projects~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Projects.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Projects.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/Snapshots.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Snapshots.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Snapshots~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Snapshots.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Snapshots.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/Storage.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Storage.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Storage~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Storage.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/Storage.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/Sources/HuntingMapGenerator/main.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/main.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/main~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/main.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/main.dia"
+  },
+  "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/DerivedSources/resource_bundle_accessor.swift": {
+    "object": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/resource_bundle_accessor.swift.o",
+    "swiftmodule": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/resource_bundle_accessor~partial.swiftmodule",
+    "swift-dependencies": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/resource_bundle_accessor.swiftdeps",
+    "diagnostics": "/Users/frosty/Projects/MapGen/swift-app/.build/arm64-apple-macosx/release/HuntingMapGenerator.build/resource_bundle_accessor.dia"
+  }
+}
