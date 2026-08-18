@@ -1,0 +1,48 @@
+[package]
+name = "hunting-map-generator"
+version = "0.1.0"
+description = "Hunting Map Generator — print-ready topographic maps for hunters"
+authors = []
+license = "Unlicense"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "hunting_map_generator_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "hunting-map-generator"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
+# Only `tokio::sync::oneshot` is used directly (the file-dialog commands); the
+# runtime itself comes from Tauri, and reqwest pulls the features it needs.
+tokio = { version = "1", features = ["sync"] }
+
+[features]
+# This feature is used for production builds or when `devPath` points to the filesystem.
+custom-protocol = ["tauri/custom-protocol"]
+
+# Size-tuned release build. The Rust side is I/O bound (file access, downloads) —
+# the heavy lifting happens in the webview — so trading scalar optimisation for
+# a smaller binary costs nothing noticeable here.
+[profile.release]
+opt-level = "z"      # optimise for size
+lto = true           # cross-crate dead-code elimination
+codegen-units = 1    # better optimisation at the cost of build time
+panic = "abort"      # drop unwinding tables
+strip = true         # remove debug symbols

@@ -1,0 +1,36 @@
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+/* Map must always render light regardless of app theme (spec §12.1) */
+.map-container {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+/* Status bar */
+.status-bar {
+  height: 22px;
+  background: var(--color-statusbar-bg);
+  border-top: 1px solid var(--color-border-subtle);
+  color: var(--color-statusbar-text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-ok    { color: var(--color-success); }
+.status-error { color: var(--color-error); }
+.status-loading { color: var(--color-text-muted); }

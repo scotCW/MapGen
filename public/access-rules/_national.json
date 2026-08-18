@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "scope": "national",
+  "description": "Default national land access classification rules based on PAD-US 3.0 (USGS Protected Areas Database). State-specific rules override these for their jurisdiction. Rules evaluate in priority order; higher number = evaluated first. Ambiguity always fails toward Unknown (Category 5), never toward Open.",
+  "rules": [
+    {
+      "id": "closed_explicit",
+      "category": "closed",
+      "source_dataset": "PAD-US 3.0 (USGS)",
+      "note": "This area has Pub_Access=Closed in PAD-US, indicating that the managing agency has formally closed it to public entry. This applies to wildlife refuges during nesting closure, wilderness study areas with temporary closure orders, and similar administrative closures.",
+      "priority": 100,
+      "match": [{ "field": "Pub_Access", "op": "eq", "value": "Closed" }],
+      "match_any": []
+    },
+    {
+      "id": "military",
+      "category": "closed",
+      "source_dataset": "PAD-US 3.0 (USGS) — Department of Defense",
+      "note": "Military reservations and restricted federal facilities are closed to civilian public access. Trespassing on military land is a federal crime. Some installations have public roads crossing them — those roads do not confer hunting access.",
+      "priority": 90,
+      "match": [],
+      "match_any": [
+        { "field": "Mang_Name", "op": "eq", "value": "DOD" },
+        { "field": "Des_Tp",    "op": "eq", "value": "MIL" }
+      ]
+    },
+    {
+      "id": "tribal",
+      "category": "closed",
+      "source_dataset": "PAD-US 3.0 (USGS) — Tribal Nations",
+      "note": "Tribal lands are sovereign nation territory. Public access and hunting require explicit permission from the governing tribal authority. This map does not show tribal access programs — contact the tribe directly.",
+      "priority": 88,
+      "match": [{ "field": "Mang_Name", "op": "eq", "value": "TRIB" }],
+      "match_any": []
+    },
+    {
+      "id": "blm_open",
+      "category": "huntable",
+      "source_dataset": "BLM Surface Management Agency (PAD-US 3.0)",
+      "note": "BLM general-use land with Pub_Access=Open. Hunting is generally allowed subject to state fish and wildlife regulations, season dates, and license requirements. Always verify unit-specific travel management plans and any temporary closures before hunting.",
+      "priority": 80,
+      "match": [
+        { "field": "Mang_Name", "op": "eq", "value": "BLM" },
+        { "field": "Pub_Access", "op": "eq", "value": "Open" }
+      ],
+      "match_any": []
+    },
+    {
+      "id": "usfs_open",
+      "category": "huntable",
+      "source_dataset": "USDA Forest Service (PAD-US 3.0)",
+      "note": "National Forest land with Pub_Access=Open. Hunting is generally allowed subject to state regulations, Forest Plan rules, and any wilderness or research natural area restrictions. Verify the specific ranger district's regulations.",
+      "priority": 80,
+      "match": [
+        { "field": "Mang_Name", "op": "eq", "value": "FS" },
+        { "field": "Pub_Access", "op": "eq", "value": "Open" }
+      ],
+      "match_any": []
+    },
+    {
+      "id": "nps_hunt_permitted",
+      "category": "huntable",
+      "source_dataset": "National Park Service (PAD-US 3.0)",
+      "note": "A small number of NPS-managed units (primarily national preserves and certain national recreation areas) explicitly permit hunting. This unit is so designated in the source data. Verify current NPS regulations — hunt zones and seasons can be narrow.",
+      "priority": 75,
+      "match": [
+        { "field": "Mang_Name", "op": "eq", "value": "NPS" },
+        { "field": "Hunt_Sts",  "op": "eq", "value": "Hunting Permitted" }
+      ],
+      "match_any": []
+    },
+    {
+      "id": "fws_hunt_permitted",
+      "category": "huntable",
+      "source_dataset": "US Fish & Wildlife Service (PAD-US 3.0)",
+      "note": "This National Wildlife Refuge unit is explicitly designated as open to hunting in the source data. Most NWRs prohibit hunting; only mark Category 1 where the source data confirms a hunt program. Verify current refuge-specific regulations.",
+      "priority": 74,
+      "match": [
+        { "field": "Mang_Name", "op": "eq", "value": "FWS" },
+        { "field": "Hunt_Sts",  "op": "eq", "value": "Hunting Permitted" }
+      ],
+      "match_any": []
+    },
+    {
+      "id": "nps_default",
+      "category": "no_hunting",
+      "source_dataset": "National Park Service (PAD-US 3.0)",
+      "note": "NPS units prohibit hunting by default under the NPS Organic Act. Only nationally designated preserves and a few special-use units permit it. This unit has no explicit hunt designation in the source data.",
+      "priority": 70,
+      "match": [{ "field": "Mang_Name", "op": "eq", "value": "NPS" }],
+      "match_any": []
+    },
+    {
+      "id": "fws_nwr_default",
+      "category": "no_hunting",
+      "source_dataset": "US Fish & Wildlife Service — National Wildlife Refuge (PAD-US 3.0)",
+      "note": "National Wildlife Refuges are managed primarily for wildlife conservation; hunting is prohibited unless the refuge has an approved hunt plan. This NWR has no explicit hunt designation in the source data — do not assume hunting is allowed.",
+      "priority": 70,
+      "match": [
+        { "field": "Mang_Name", "op": "eq", "value": "FWS" },
+        { "field": "Des_Tp",    "op": "eq", "value": "NWR" }
+      ],
+      "match_any": []
+    },
+    {
+      "id": "blm_restricted",
+      "category": "unknown",
+      "source_dataset": "BLM Surface Management Agency (PAD-US 3.0)",
+      "note": "BLM land with Pub_Access=Restricted or Unknown. Access rules for this specific unit are not captured in available data. Contact the local BLM field office to confirm whether hunting access is permitted.",
+      "priority": 65,
+      "match": [{ "field": "Mang_Name", "op": "eq", "value": "BLM" }],
+      "match_any": [
+        { "field": "Pub_Access", "op": "eq", "value": "Restricted" },
+        { "field": "Pub_Access", "op": "eq", "value": "Unknown" },
+        { "field": "Pub_Access", "op": "eq", "value": "XA" }
+      ]
+    },
+    {
+      "id": "usfs_restricted",
+      "category": "unknown",
+      "source_dataset": "USDA Forest Service (PAD-US 3.0)",
+      "note": "National Forest land with Pub_Access=Restricted or Unknown. Access rules for this specific unit are not captured in available data. Contact the local ranger district to confirm access and hunting status.",
+      "priority": 65,
+      "match": [{ "field": "Mang_Name", "op": "eq", "value": "FS" }],
+      "match_any": [
+        { "field": "Pub_Access", "op": "eq", "value": "Restricted" },
+        { "field": "Pub_Access", "op": "eq", "value": "Unknown" },
+        { "field": "Pub_Access", "op": "eq", "value": "XA" }
+      ]
+    },
+    {
+      "id": "private_land",
+      "category": "private",
+      "source_dataset": "PAD-US 3.0 / County Parcel Data",
+      "note": "Privately owned land — permission from the landowner is required before entry. This map shows boundary location only, not owner identity (§7.3). Trespassing laws vary by state.",
+      "priority": 30,
+      "match": [],
+      "match_any": [
+        { "field": "Mang_Name", "op": "eq", "value": "PVT" },
+        { "field": "Own_Type",  "op": "eq", "value": "PVT" },
+        { "field": "Own_Type",  "op": "eq", "value": "Private" }
+      ]
+    }
+  ]
+}

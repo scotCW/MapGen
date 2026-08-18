@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.huntingmapgenerator.app</id>
+
+  <name>Hunting Map Generator</name>
+  <summary>Print-ready topographic hunting maps</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LicenseRef-proprietary</project_license>
+
+  <description>
+    <p>
+      Hunting Map Generator creates print-ready topographic maps as PDFs from
+      public-domain government geographic data. It runs entirely on your machine:
+      no accounts, no cloud services, and no telemetry.
+    </p>
+    <p>
+      Once county data is downloaded, the application works fully offline. Map
+      layers are drawn from USGS National Map topographic and imagery tiles, U.S.
+      Census Bureau TIGER boundaries, the USGS Protected Areas Database, and USFS
+      Motor Vehicle Use Maps.
+    </p>
+    <p>
+      Land access categories shown in this application are estimates derived from
+      public datasets. Always verify access independently before entering any
+      area.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">com.huntingmapgenerator.app.desktop</launchable>
+
+  <categories>
+    <category>Utility</category>
+    <category>Science</category>
+  </categories>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+
+  <requires>
+    <display_length compare="ge">900</display_length>
+  </requires>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="0.1.0" date="2026-08-15">
+      <description>
+        <p>Initial release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "MapGen Dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [".claude/dev.sh"],
+      "port": 1420,
+      "url": "http://localhost:1420"
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "stateId": "CO",
+  "stateName": "Colorado",
+  "description": "Colorado-specific map layers sourced from Colorado Parks & Wildlife (CPW), Colorado State Land Board (CSLB), and U.S. federal agencies. These layers are merged with the national layer config at runtime.",
+  "countyBoundarySource": {
+    "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query?where=STATE%3D'08'&outFields=COUNTY%2CNAME%2CSTATE%2CGEOID&f=geojson&outSR=4326&geometryPrecision=4&maxAllowableOffset=0.0005",
+    "nameField": "NAME",
+    "fipsField": "GEOID",
+    "stateFips": "08",
+    "attribution": "U.S. Census Bureau \u2014 TIGER/Line Web Map Service",
+    "license": "Public Domain \u2014 U.S. Government work, 17 U.S.C. \u00a7 105"
+  },
+  "groups": [
+    {
+      "id": "co_wildlife",
+      "label": "Colorado Wildlife & Access",
+      "description": "State Wildlife Areas, Walk-In Access lands, and access-lease parcels managed by Colorado Parks & Wildlife. Data sourced from CPW Open Data.",
+      "controlType": "checkbox",
+      "layers": [
+        {
+          "id": "co_swa",
+          "name": "State Wildlife Areas (CPW)",
+          "description": "Colorado State Wildlife Areas managed by CPW and open to licensed hunters. Hunting permitted subject to current CPW regulations and any area-specific rules.",
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "downloadUrl": "https://opendata.arcgis.com/datasets/f6d7b2b7b9874e1bbf3a8d8f3d8e8f9a_0.geojson",
+          "attribution": "Colorado Parks & Wildlife \u2014 Open Data Portal",
+          "license": "Public Domain \u2014 State of Colorado Open Data",
+          "defaultOn": false,
+          "defaultOpacity": 0.55,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "accessCategory": 1,
+          "accessRuleId": "co_swa_open",
+          "style": {
+            "fillColor": "#2e7d32",
+            "fillOpacity": 0.45,
+            "strokeColor": "#1b5e20",
+            "strokeWidth": 0.75
+          }
+        },
+        {
+          "id": "co_walk_in",
+          "name": "Walk-In Access Areas (CPW)",
+          "description": "Private lands enrolled in CPW's Walk-In Access program. Open to public hunting during program season. Enrollment changes annually \u2014 verify with CPW before hunting.",
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "downloadUrl": "https://opendata.arcgis.com/datasets/cpw_walk_in_access_0.geojson",
+          "attribution": "Colorado Parks & Wildlife \u2014 Walk-In Access Program",
+          "license": "Public Domain \u2014 State of Colorado Open Data",
+          "defaultOn": false,
+          "defaultOpacity": 0.5,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "accessCategory": 1,
+          "accessRuleId": "co_walk_in",
+          "style": {
+            "fillColor": "#4CAF50",
+            "fillOpacity": 0.4,
+            "strokeColor": "#2e7d32",
+            "strokeWidth": 0.75,
+            "strokeDash": [
+              4,
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "co_state_land",
+      "label": "Colorado State Land",
+      "description": "State Trust Land managed by the Colorado State Land Board (CSLB). Most state trust land is closed to public access \u2014 exceptions are parcels under CPW public-access leases.",
+      "controlType": "checkbox",
+      "layers": [
+        {
+          "id": "co_state_trust",
+          "name": "State Trust Land (CSLB)",
+          "description": "Colorado State Trust Land parcels managed by the Colorado State Land Board. Most are closed (Category 3); parcels with CPW access leases appear as Category 1. Verify before entering.",
+          "sourceType": "geojson",
+          "renderType": "fill",
+          "downloadUrl": "https://opendata.arcgis.com/datasets/cslb_surface_management_0.geojson",
+          "attribution": "Colorado State Land Board \u2014 Open Data",
+          "license": "Public Domain \u2014 State of Colorado",
+          "defaultOn": false,
+          "defaultOpacity": 0.4,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "accessCategory": 3,
+          "accessRuleId": "co_state_trust_default",
+          "style": {
+            "fillColor": "#c62828",
+            "fillOpacity": 0.35,
+            "strokeColor": "#b71c1c",
+            "strokeWidth": 0.75,
+            "strokeDash": [
+              6,
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "co_hunting_units",
+      "label": "Colorado Hunting Units",
+      "description": "Game Management Unit (GMU) boundaries from Colorado Parks & Wildlife. GMUs define where specific license types are valid \u2014 they are not land-access boundaries.",
+      "controlType": "checkbox",
+      "layers": [
+        {
+          "id": "co_gmu",
+          "name": "Game Management Units (GMU)",
+          "description": "CPW Game Management Unit boundaries for deer, elk, pronghorn, and other big game. Your hunting license is valid in specific GMUs \u2014 verify your unit before hunting.",
+          "sourceType": "geojson",
+          "renderType": "line",
+          "downloadUrl": "https://opendata.arcgis.com/datasets/cpw_game_management_units_0.geojson",
+          "attribution": "Colorado Parks & Wildlife \u2014 Game Management Units",
+          "license": "Public Domain \u2014 State of Colorado Open Data",
+          "defaultOn": false,
+          "defaultOpacity": 0.85,
+          "onlineOnly": false,
+          "downloadable": true,
+          "requiresDownload": true,
+          "style": {
+            "strokeColor": "#6A1B9A",
+            "strokeWidth": 1.5,
+            "strokeDash": [
+              8,
+              4
+            ]
+          }
+        },
+        {
+          "id": "co_gmu_labels",
+          "name": "GMU Number Labels",
+          "description": "Number labels for each Game Management Unit, displayed at the unit centroid. Requires GMU boundary layer to be visible.",
+          "sourceType": "geojson",
+          "renderType": "circle",
+          "downloadUrl": null,
+          "attribution": "Colorado Parks & Wildlife",
+          "license": "Public Domain \u2014 State of Colorado Open Data",
+          "defaultOn": false,
+          "defaultOpacity": 1.0,
+          "onlineOnly": false,
+          "downloadable": false,
+          "requiresDownload": true,
+          "dependsOn": "co_gmu",
+          "style": {
+            "strokeColor": "#6A1B9A",
+            "strokeWidth": 1.0
+          }
+        }
+      ]
+    }
+  ]
+}

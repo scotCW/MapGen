@@ -1,0 +1,163 @@
+/*
+ * Design token layer — all colours go through these variables.
+ * Map rendering and printed output are always light-themed (per spec §12.1).
+ * App chrome reads these tokens so only one place changes per theme.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Light theme (default)                                               */
+/* ------------------------------------------------------------------ */
+:root,
+[data-theme="light"] {
+  /* Backgrounds — warm off-white, paper-like */
+  --color-bg:          #F5F3EE;
+  --color-surface:     #FFFFFF;
+  --color-surface-2:   #EEECE6;
+  --color-surface-3:   #E5E2D8;
+
+  /* Borders */
+  --color-border:        #CCC8BC;
+  --color-border-subtle: #DEDAD0;
+
+  /* Text */
+  --color-text:       #1A1710;
+  --color-text-2:     #565248;
+  --color-text-muted: #8A8678;
+
+  /* Accent — hunting green */
+  --color-accent:       #256638;
+  --color-accent-hover: #1B4E2A;
+  --color-accent-text:  #FFFFFF;
+
+  /* Semantic */
+  --color-success: #256638;
+  --color-warning: #A85200;
+  --color-error:   #B01C1C;
+  --color-info:    #1A5C8A;
+
+  /* App header — always dark forest green (brand anchor) */
+  --color-header-bg:     #243320;
+  --color-header-text:   #D8E4D4;
+  --color-header-text-2: #96A890;
+  --color-header-border: #344830;
+
+  /* Status bar */
+  --color-statusbar-bg:   #E8E5DC;
+  --color-statusbar-text: #6A6660;
+
+  /* Input / control */
+  --color-input-bg:     #FFFFFF;
+  --color-input-border: #B8B4A8;
+  --color-input-focus:  #256638;
+
+  /* Overlay / scrim */
+  --color-scrim: rgba(0, 0, 0, 0.40);
+
+  /* Elevation */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10);
+  --shadow-md: 0 3px 10px rgba(0, 0, 0, 0.14);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.18);
+
+  /* Geometry */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Consolas", "Menlo", monospace;
+
+  /* ---------------------------------------------------------------- */
+  /* Compatibility aliases                                             */
+  /* ---------------------------------------------------------------- */
+  /* Several tab/component stylesheets were authored against these
+   * shorter names before the --color- prefix convention was adopted.
+   * Every var(--text, #222)-style call site silently fell back to its
+   * hardcoded light-mode default and never actually read the theme —
+   * which is why dark mode never reached those screens. Aliasing here
+   * fixes every consumer at once without hunting through each file. */
+  --text:            var(--color-text);
+  --text-secondary:  var(--color-text-2);
+  --text-muted:      var(--color-text-muted);
+  --surface:         var(--color-surface);
+  --surface-1:       var(--color-surface);
+  --surface-2:       var(--color-surface-2);
+  --surface-3:       var(--color-surface-3);
+  --surface-raised:  var(--color-surface-3);
+  --border:          var(--color-border);
+  --accent:          var(--color-accent);
+  --accent-subtle:   rgba(37, 102, 56, 0.10);
+  --accent-rgb:      37 102 56;
+  --hover:           rgba(0, 0, 0, 0.05);
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark theme                                                          */
+/* ------------------------------------------------------------------ */
+[data-theme="dark"] {
+  /* Backgrounds — warm dark charcoal, not cold blue-black */
+  --color-bg:        #1C1B18;
+  --color-surface:   #252420;
+  --color-surface-2: #302F28;
+  --color-surface-3: #3A3930;
+
+  /* Borders */
+  --color-border:        #424038;
+  --color-border-subtle: #333028;
+
+  /* Text */
+  --color-text:       #EDE9E0;
+  --color-text-2:     #B4B09E;
+  --color-text-muted: #787460;
+
+  /* Accent — lighter green so it reads on dark */
+  --color-accent:       #4A9E62;
+  --color-accent-hover: #5BBD76;
+  --color-accent-text:  #0A1A0E;
+
+  /* Semantic */
+  --color-success: #4A9E62;
+  --color-warning: #D07820;
+  --color-error:   #D94040;
+  --color-info:    #3A8EC0;
+
+  /* App header — very dark green-black */
+  --color-header-bg:     #141A12;
+  --color-header-text:   #B8C8B2;
+  --color-header-text-2: #6A806A;
+  --color-header-border: #222820;
+
+  /* Status bar */
+  --color-statusbar-bg:   #131210;
+  --color-statusbar-text: #606058;
+
+  /* Input / control */
+  --color-input-bg:     #252420;
+  --color-input-border: #484640;
+  --color-input-focus:  #4A9E62;
+
+  /* Overlay / scrim */
+  --color-scrim: rgba(0, 0, 0, 0.65);
+
+  /* Elevation — stronger in dark (more contrast needed) */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 3px 10px rgba(0, 0, 0, 0.50);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.65);
+
+  /* Geometry and typography same tokens, values inherited */
+
+  /* Compatibility aliases — see :root for why these exist. */
+  --text:            var(--color-text);
+  --text-secondary:  var(--color-text-2);
+  --text-muted:      var(--color-text-muted);
+  --surface:         var(--color-surface);
+  --surface-1:       var(--color-surface);
+  --surface-2:       var(--color-surface-2);
+  --surface-3:       var(--color-surface-3);
+  --surface-raised:  var(--color-surface-3);
+  --border:          var(--color-border);
+  --accent:          var(--color-accent);
+  --accent-subtle:   rgba(74, 158, 98, 0.16);
+  --accent-rgb:      74 158 98;
+  --hover:           rgba(255, 255, 255, 0.06);
+}

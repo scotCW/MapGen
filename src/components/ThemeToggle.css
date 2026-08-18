@@ -1,0 +1,35 @@
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-md);
+  padding: 2px;
+}
+
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-header-text-2);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--color-header-text);
+}
+
+.theme-toggle-btn.active {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--color-header-text);
+  font-weight: 600;
+}
