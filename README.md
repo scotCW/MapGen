@@ -41,6 +41,15 @@ yarn tauri dev
 
 See [BUILDING.md](BUILDING.md) for platform-specific build and packaging instructions (macOS, Windows, Linux) for the Tauri build, and [swift-app/README.md](swift-app/README.md) for the Swift build.
 
+## State Coverage
+
+Adding a state means writing its region/layer config (`public/regions/<state>.json`) and land-access rules (`public/access-rules/<state>.json`) — no code changes required. States not yet started aren't listed below; see `public/regions/_states.json` for the live list and `public/regions/TEMPLATE.json` for the config schema.
+
+| State | Layer groups | Data layers | Access rules |
+|---|---|---|---|
+| Colorado | 3 | 5 | ✅ |
+| Wyoming | 3 | 6 | ✅ |
+
 ## Data Sources
 
 - **USGS National Map** — Topographic tiles, imagery, hillshade (public domain)
