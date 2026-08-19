@@ -14,13 +14,14 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.7.2",
     "@tauri-apps/plugin-sql": "^2",
-    "maplibre-gl": "^4",
+    "maplibre-gl": "^6",
     "pdf-lib": "^1.17.1",
     "react": "^19",
     "react-dom": "^19"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "@types/geojson": "^7946.0.16",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5",
