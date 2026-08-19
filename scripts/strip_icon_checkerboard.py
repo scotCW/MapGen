@@ -6,7 +6,7 @@ alpha channel, so the tool flattened onto its own UI convention for
 transparency instead of a solid color). This produced a visible grey/white
 checkerboard behind the logo in every generated app icon.
 
-Rebuilds icon.jpeg as icon.png with real alpha transparency in two passes:
+Rebuilds icon.jpeg as icon.png in three steps:
 
 1. Flood-fill from the image border through pixels close to either checker
    color. This is the safe pass — it can't touch real artwork, since real
@@ -18,6 +18,12 @@ Rebuilds icon.jpeg as icon.png with real alpha transparency in two passes:
    contain a real mix of *both* checker colors — true checkerboard patches
    alternate, whereas solid single-color artwork (like a real white ring)
    does not, so this can't misfire on real design content.
+3. Composite the now-transparent artwork onto an opaque cream/parchment
+   background, sized to an ~82% safe zone. Apple's HIG requires macOS app
+   icons to be fully opaque and fill the canvas themselves — unlike iOS,
+   macOS doesn't apply its own background/mask, so a transparent icon (steps
+   1-2 alone) is nearly invisible against the Dock's dark translucent
+   material in dark mode.
 
 Requires: pillow, numpy, scipy (pip3 install --user pillow numpy scipy).
 Run: python3 scripts/strip_icon_checkerboard.py
@@ -41,6 +47,10 @@ CHECKER_COLORS = [(254, 254, 254), (243, 243, 243)]
 TOL = 6
 MIN_POCKET_SIZE = 20
 MIN_COLOR_FRAC = 0.15  # each checker color must be at least this much of a pocket
+
+# Step 3: final opaque composite, per Apple's macOS app icon guidelines.
+BACKGROUND = (244, 236, 214)  # warm parchment/map-paper cream
+SAFE_ZONE_FRAC = 0.82  # artwork's longer dimension fills this fraction of the canvas
 
 
 def main() -> None:
@@ -92,8 +102,25 @@ def main() -> None:
 
     alpha = np.where(is_bg, 0, 255).astype(np.uint8)
     rgba = np.dstack([np.array(im), alpha])
-    Image.fromarray(rgba.astype(np.uint8), mode="RGBA").save(OUT)
-    print(f"wrote {OUT} ({is_bg.sum()}/{h*w} px transparent, {is_bg.sum()/(h*w)*100:.1f}%)")
+    transparent = Image.fromarray(rgba.astype(np.uint8), mode="RGBA")
+
+    # Step 3: composite onto an opaque canvas, safe-zone-scaled and centered.
+    content_alpha = np.array(transparent)[:, :, 3]
+    rows = np.any(content_alpha > 10, axis=1)
+    cols = np.any(content_alpha > 10, axis=0)
+    rmin, rmax = np.where(rows)[0][[0, -1]]
+    cmin, cmax = np.where(cols)[0][[0, -1]]
+    content = transparent.crop((cmin, rmin, cmax + 1, rmax + 1))
+    cw, ch = content.size
+
+    scale = (max(h, w) * SAFE_ZONE_FRAC) / max(cw, ch)
+    new_w, new_h = int(cw * scale), int(ch * scale)
+    content_resized = content.resize((new_w, new_h), Image.LANCZOS)
+
+    canvas = Image.new("RGBA", (w, h), BACKGROUND + (255,))
+    canvas.paste(content_resized, ((w - new_w) // 2, (h - new_h) // 2), content_resized)
+    canvas.convert("RGB").save(OUT)  # no alpha channel — Apple requires macOS icons be fully opaque
+    print(f"wrote {OUT} ({w}x{h}, opaque, artwork at {SAFE_ZONE_FRAC*100:.0f}% safe zone)")
 
 
 if __name__ == "__main__":
