@@ -1,4 +1,4 @@
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 import type { Bounds } from "./geo";
 
 export interface RasterLayer {
@@ -60,7 +60,7 @@ export async function renderMapImage(opts: RenderOptions): Promise<string> {
       style: { version: 8, sources, layers },
       bounds: [bounds.west, bounds.south, bounds.east, bounds.north],
       fitBoundsOptions: { padding: 0, animate: false },
-      preserveDrawingBuffer: true,
+      canvasContextAttributes: { preserveDrawingBuffer: true },
       interactive: false,
       attributionControl: false,
       pixelRatio: 1,
