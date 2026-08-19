@@ -10,16 +10,20 @@ retains its own copyright and license terms.
 
 | License | Count | Notes |
 |---------|-------|-------|
-| MIT | ~117 crates + runtime JS | Permissive |
-| MIT OR Apache-2.0 | ~326 crates | We elect MIT |
-| Apache-2.0 | 3 crates | Permissive |
-| BSD-3-Clause | 4 crates + MapLibre GL JS | Permissive, attribution required |
-| ISC | 1 crate | MIT-equivalent |
-| Zlib | 1 crate | Permissive |
+| MIT | ~138 crates + runtime JS | Permissive |
+| Apache-2.0 OR MIT (and near-equivalents) | ~400 crates | We elect MIT. Includes a couple offering LGPL-2.1-or-later as a third option (e.g. `r-efi`) — irrelevant since we elect MIT/Apache-2.0 instead |
+| Apache-2.0 | ~6 crates | Permissive |
+| BSD-2-Clause / BSD-3-Clause | ~7 crates + MapLibre GL JS | Permissive, attribution required |
+| ISC | ~5 crates | MIT-equivalent |
+| Zlib | 2 crates | Permissive |
 | Unicode-3.0 | 18 crates (ICU data) | Permissive |
-| Unlicense OR MIT | 11 crates | Public domain or MIT |
+| Unlicense (standalone or OR MIT) | ~12 crates | Public domain or MIT |
+| BSL-1.0 | offered alongside Apache-2.0/MIT on 3 crates | We elect MIT/Apache-2.0 instead |
+| CDLA-Permissive-2.0 | `webpki-roots` (Mozilla CA bundle data) | Permissive data license |
 | MPL-2.0 | 5 crates (Servo CSS engine) | File-level copyleft — source on crates.io |
 | CC-BY-4.0 | caniuse-lite | **Dev-build tool only — not bundled in the app** |
+
+No copyleft license (GPL/LGPL/AGPL) applies to anything actually shipped: the only place LGPL appears, it's one of three options on a dual/triple-licensed crate and we elect a permissive alternative instead. Verified against the live dependency tree with `cargo license` and `yarn licenses list`.
 
 ---
 
