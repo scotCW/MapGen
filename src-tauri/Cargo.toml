@@ -1,6 +1,6 @@
 [package]
 name = "hunting-map-generator"
-version = "0.1.0"
+version = "0.0.1"
 description = "Hunting Map Generator — print-ready topographic maps for hunters"
 authors = []
 license = "Unlicense"
