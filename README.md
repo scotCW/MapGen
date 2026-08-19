@@ -1,8 +1,24 @@
 # Hunting Map Generator
 
-A Tauri v2 desktop app for building custom printable hunting maps from public USGS, Census, and USFS data, with multi-sheet PDF export, magnetic declination, and land-access overlays.
+A desktop app for building custom printable hunting maps from public USGS, Census, and USFS data, with multi-sheet PDF export, magnetic declination, and land-access overlays.
 
 Generates print-ready topographic hunting maps as PDFs. Works fully offline once county data is downloaded — no accounts, no telemetry.
+
+## Two builds, one frontend
+
+This repo ships **two independent native shells** around the same React/TypeScript frontend (`src/`) — pick one, they're not both required:
+
+| | Tauri (Option A) | Swift (Option B) |
+|---|---|---|
+| Directory | [`src-tauri/`](src-tauri) | [`swift-app/`](swift-app) |
+| Backend language | Rust | Swift, via `WKScriptMessageHandler` |
+| Platforms | macOS, Windows, Linux | macOS only |
+| Build | `yarn tauri build` | `./scripts/build-swift-app.sh` or Xcode |
+| Status | Primary, actively built/released | Alternate native shell; signing not yet configured |
+
+Both talk to the same frontend through the same IPC surface (`src/lib/ipc.ts`), which detects at runtime which shell it's running in. `project.json` and the on-disk data layout are shared, so a project is portable between the two.
+
+Default to the **Tauri build** unless you specifically need the Swift shell — it's the one with working release packaging today. See [swift-app/README.md](swift-app/README.md) for the Swift build's architecture and Xcode setup.
 
 ## Features
 
@@ -23,7 +39,7 @@ yarn tauri dev
 
 ## Building
 
-See [BUILDING.md](BUILDING.md) for platform-specific build and packaging instructions (macOS, Windows, Linux).
+See [BUILDING.md](BUILDING.md) for platform-specific build and packaging instructions (macOS, Windows, Linux) for the Tauri build, and [swift-app/README.md](swift-app/README.md) for the Swift build.
 
 ## Data Sources
 
