@@ -14,7 +14,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.7.2",
     "@tauri-apps/plugin-sql": "^2",
-    "maplibre-gl": "^4",
+    "maplibre-gl": "^6",
     "pdf-lib": "^1.17.1",
     "react": "^18",
     "react-dom": "^18"
