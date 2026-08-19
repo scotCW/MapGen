@@ -1,8 +1,8 @@
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
-use chrono::{DateTime, Utc};
 
 use crate::storage::base_data_dir;
 
@@ -67,7 +67,9 @@ pub struct DownloadItem {
 const STALE_DAYS: i64 = 90;
 
 fn state_data_dir(app: &AppHandle, state_id: &str) -> Result<PathBuf, String> {
-    let dir = base_data_dir(app)?.join("data").join(state_id.to_lowercase());
+    let dir = base_data_dir(app)?
+        .join("data")
+        .join(state_id.to_lowercase());
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
 }
@@ -134,9 +136,9 @@ pub fn list_downloaded_layers(
     let dir = state_data_dir(&app, &state_id)?;
     let mut manifest = read_manifest(&dir);
     // Drop entries whose files no longer exist, refresh stale flag
-    manifest.layers.retain(|e| {
-        dir.join(format!("{}.geojson", e.layer_id)).exists()
-    });
+    manifest
+        .layers
+        .retain(|e| dir.join(format!("{}.geojson", e.layer_id)).exists());
     for entry in &mut manifest.layers {
         entry.is_stale = stale_check(&entry.downloaded_at);
     }
@@ -194,7 +196,9 @@ pub async fn start_download(
             match download_one(&app, &state_id, &item).await {
                 Ok(size_bytes) => {
                     // Update manifest
-                    let Ok(dir) = state_data_dir(&app, &state_id) else { continue };
+                    let Ok(dir) = state_data_dir(&app, &state_id) else {
+                        continue;
+                    };
                     let mut manifest = read_manifest(&dir);
                     manifest.layers.retain(|e| e.layer_id != item.layer_id);
                     manifest.layers.push(LayerManifestEntry {
@@ -228,11 +232,7 @@ pub async fn start_download(
 }
 
 /// Downloads a single layer to disk; returns the byte count written.
-async fn download_one(
-    app: &AppHandle,
-    state_id: &str,
-    item: &DownloadItem,
-) -> Result<u64, String> {
+async fn download_one(app: &AppHandle, state_id: &str, item: &DownloadItem) -> Result<u64, String> {
     let dir = state_data_dir(app, state_id)?;
     let dest = dir.join(format!("{}.geojson", item.layer_id));
 
@@ -262,25 +262,22 @@ async fn download_one(
 pub fn get_download_progress(
     ds: tauri::State<'_, Arc<DownloadState>>,
 ) -> Result<DownloadProgressState, String> {
-    ds.progress.lock().map(|p| p.clone()).map_err(|e| e.to_string())
+    ds.progress
+        .lock()
+        .map(|p| p.clone())
+        .map_err(|e| e.to_string())
 }
 
 /// Signals the background download to stop after the current item finishes.
 #[tauri::command]
-pub fn cancel_download(
-    ds: tauri::State<'_, Arc<DownloadState>>,
-) -> Result<(), String> {
+pub fn cancel_download(ds: tauri::State<'_, Arc<DownloadState>>) -> Result<(), String> {
     *ds.cancel.lock().map_err(|e| e.to_string())? = true;
     Ok(())
 }
 
 /// Removes a downloaded layer's file and manifest entry.
 #[tauri::command]
-pub fn delete_layer_data(
-    app: AppHandle,
-    state_id: String,
-    layer_id: String,
-) -> Result<(), String> {
+pub fn delete_layer_data(app: AppHandle, state_id: String, layer_id: String) -> Result<(), String> {
     let dir = state_data_dir(&app, &state_id)?;
     let file = dir.join(format!("{}.geojson", layer_id));
     if file.exists() {
