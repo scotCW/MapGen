@@ -18,14 +18,14 @@ use tauri::{AppHandle, Manager};
 #[serde(rename_all = "camelCase", default)]
 pub struct AppSettings {
     pub version: u32,
-    pub theme: String,                   // "light" | "dark" | "system"
-    pub units: String,                   // "imperial" | "metric"
-    pub difficulty: String,              // "beginner" | "intermediate" | "advanced"
-    pub data_location: Option<String>,   // null → use OS app-data dir
+    pub theme: String,                 // "light" | "dark" | "system"
+    pub units: String,                 // "imperial" | "metric"
+    pub difficulty: String,            // "beginner" | "intermediate" | "advanced"
+    pub data_location: Option<String>, // null → use OS app-data dir
     pub online_by_default: bool,
-    pub snapshot_retention: u32,         // number of snapshots to keep
-    pub currency_warning_months: u32,    // flag data older than this
-    pub default_dpi: u32,               // 150 | 200 | 300 | 400
+    pub snapshot_retention: u32,      // number of snapshots to keep
+    pub currency_warning_months: u32, // flag data older than this
+    pub default_dpi: u32,             // 150 | 200 | 300 | 400
     pub auto_open_folder_after_export: bool,
 }
 
@@ -118,10 +118,7 @@ pub fn get_data_dir(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn get_settings(app: AppHandle) -> Result<AppSettings, String> {
-    let base = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?;
+    let base = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let path = base.join("settings").join("settings.json");
 
     if path.exists() {
@@ -177,21 +174,18 @@ pub fn read_app_log(app: AppHandle, lines: Option<usize>) -> Result<String, Stri
     let content = fs::read_to_string(&log_path).map_err(|e| e.to_string())?;
     let n = lines.unwrap_or(200);
     let all: Vec<&str> = content.lines().collect();
-    let slice = if all.len() > n { &all[all.len() - n..] } else { &all[..] };
+    let slice = if all.len() > n {
+        &all[all.len() - n..]
+    } else {
+        &all[..]
+    };
     Ok(slice.join("\n"))
 }
 
 /// Merges a single key/value pair into settings.json.
 #[tauri::command]
-pub fn set_setting(
-    app: AppHandle,
-    key: String,
-    value: serde_json::Value,
-) -> Result<(), String> {
-    let base = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?;
+pub fn set_setting(app: AppHandle, key: String, value: serde_json::Value) -> Result<(), String> {
+    let base = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let path = base.join("settings").join("settings.json");
 
     let mut doc: serde_json::Value = if path.exists() {
@@ -222,8 +216,11 @@ mod settings_tests {
     fn partial_settings_file_loads_with_defaults() {
         let json = r#"{"dataLocation":"/Volumes/Maps","units":"metric"}"#;
         let s: AppSettings = serde_json::from_str(json).unwrap();
-        assert_eq!(s.data_location.as_deref(), Some("/Volumes/Maps"),
-            "a relocated data directory must survive a partial file");
+        assert_eq!(
+            s.data_location.as_deref(),
+            Some("/Volumes/Maps"),
+            "a relocated data directory must survive a partial file"
+        );
         assert_eq!(s.units, "metric");
         // everything absent falls back to the defaults
         assert_eq!(s.theme, "system");

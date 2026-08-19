@@ -94,14 +94,9 @@ pub fn list_presets(app: AppHandle) -> Result<Vec<PresetEntry>, String> {
 
 /// Applies a preset's format + layer settings to an existing project.
 #[tauri::command]
-pub fn apply_preset(
-    app: AppHandle,
-    project_id: String,
-    preset_id: String,
-) -> Result<(), String> {
+pub fn apply_preset(app: AppHandle, project_id: String, preset_id: String) -> Result<(), String> {
     let preset_path = presets_dir(&app)?.join(format!("{preset_id}.json"));
-    let text = fs::read_to_string(&preset_path)
-        .map_err(|e| format!("Cannot read preset: {e}"))?;
+    let text = fs::read_to_string(&preset_path).map_err(|e| format!("Cannot read preset: {e}"))?;
     let preset: PresetEntry = serde_json::from_str(&text).map_err(|e| e.to_string())?;
 
     // Bumps the generation for the same reason snapshot restore does: a tab save

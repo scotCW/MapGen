@@ -27,19 +27,19 @@ pub struct ForkedFrom {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FormatSettings {
-    pub paper_size: String,          // "letter" | "legal" | "tabloid" | "a4" | "a3" | "custom"
-    pub paper_width_in: f64,         // effective width (inches); only meaningful for "custom"
-    pub paper_height_in: f64,        // effective height (inches); only meaningful for "custom"
-    pub orientation: String,         // "portrait" | "landscape"
-    pub margins: String,             // "narrow" | "normal" | "wide"
-    pub sheet_layout: String,        // "1" | "2" | "4" | "6" | "custom" | "auto"
-    pub sheets_across: u32,          // for "custom" grid
-    pub sheets_down: u32,            // for "custom" grid
-    pub sheets_split: String,        // "side-by-side" | "stacked" (2-sheet sub-option)
-    pub sheets_arrangement: String,  // "3x2" | "2x3" (6-sheet sub-option)
-    pub scale: u32,                  // ratio denominator (e.g. 24000 for 1:24,000)
-    pub scale_custom: Option<u32>,   // non-null only when paper_size == "custom"
-    pub scale_lock: String,          // "scale" | "sheet-count" | "both"
+    pub paper_size: String, // "letter" | "legal" | "tabloid" | "a4" | "a3" | "custom"
+    pub paper_width_in: f64, // effective width (inches); only meaningful for "custom"
+    pub paper_height_in: f64, // effective height (inches); only meaningful for "custom"
+    pub orientation: String, // "portrait" | "landscape"
+    pub margins: String,    // "narrow" | "normal" | "wide"
+    pub sheet_layout: String, // "1" | "2" | "4" | "6" | "custom" | "auto"
+    pub sheets_across: u32, // for "custom" grid
+    pub sheets_down: u32,   // for "custom" grid
+    pub sheets_split: String, // "side-by-side" | "stacked" (2-sheet sub-option)
+    pub sheets_arrangement: String, // "3x2" | "2x3" (6-sheet sub-option)
+    pub scale: u32,         // ratio denominator (e.g. 24000 for 1:24,000)
+    pub scale_custom: Option<u32>, // non-null only when paper_size == "custom"
+    pub scale_lock: String, // "scale" | "sheet-count" | "both"
     pub freeform_draw: bool,
 }
 
@@ -123,8 +123,8 @@ pub struct ProjectMeta {
     pub counties: Vec<String>,
     pub area_size_km2: Option<f64>,
     pub sheet_count: u32,
-    pub last_modified: String,   // ISO-8601 UTC
-    pub created_at: String,      // ISO-8601 UTC
+    pub last_modified: String, // ISO-8601 UTC
+    pub created_at: String,    // ISO-8601 UTC
     pub forked_from: Option<ForkedFrom>,
     #[serde(default)]
     pub notes: String,
@@ -175,11 +175,7 @@ where
 
 /// The logic behind [`guarded_update`], separated from AppHandle path
 /// resolution so it can be exercised directly in tests.
-fn guarded_update_at<F>(
-    dir: &Path,
-    expected_generation: u64,
-    apply: F,
-) -> Result<u64, String>
+fn guarded_update_at<F>(dir: &Path, expected_generation: u64, apply: F) -> Result<u64, String>
 where
     F: FnOnce(&mut ProjectMeta),
 {
@@ -212,11 +208,7 @@ where
 
 /// Rewrites the document wholesale and bumps the generation, invalidating any
 /// save still in flight from before. Used by snapshot restore and preset apply.
-pub fn rewrite_with_new_generation<F>(
-    app: &AppHandle,
-    id: &str,
-    apply: F,
-) -> Result<u64, String>
+pub fn rewrite_with_new_generation<F>(app: &AppHandle, id: &str, apply: F) -> Result<u64, String>
 where
     F: FnOnce(&mut ProjectMeta),
 {
@@ -393,7 +385,11 @@ pub fn create_project(app: AppHandle, name: String) -> Result<ProjectSummary, St
 
 /// Forks a project: creates a fully independent copy with forkedFrom lineage.
 #[tauri::command]
-pub fn fork_project(app: AppHandle, source_id: String, new_name: String) -> Result<ProjectSummary, String> {
+pub fn fork_project(
+    app: AppHandle,
+    source_id: String,
+    new_name: String,
+) -> Result<ProjectSummary, String> {
     let source_dir = project_dir(&app, &source_id)?;
     let source = read_project_json(&source_dir)?;
 
@@ -529,7 +525,7 @@ pub struct ExportHistoryEntry {
     pub id: String,
     pub filename: String,
     pub path: String,
-    pub date: String,        // ISO-8601 UTC
+    pub date: String, // ISO-8601 UTC
     pub dpi: u32,
     pub pages: u32,
     pub file_size_bytes: u64,
@@ -542,8 +538,13 @@ fn history_path(exports_dir: &Path) -> PathBuf {
 
 fn read_history(exports_dir: &Path) -> Vec<ExportHistoryEntry> {
     let path = history_path(exports_dir);
-    if !path.exists() { return vec![]; }
-    let text = match fs::read_to_string(&path) { Ok(t) => t, Err(_) => return vec![] };
+    if !path.exists() {
+        return vec![];
+    }
+    let text = match fs::read_to_string(&path) {
+        Ok(t) => t,
+        Err(_) => return vec![],
+    };
     serde_json::from_str(&text).unwrap_or_default()
 }
 
@@ -582,13 +583,23 @@ pub fn save_export(
 
     let safe_name: String = filename
         .chars()
-        .map(|c| if c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.' { c } else { '_' })
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect();
 
     // Resolve destination folder — fall back to project exports/ if custom path is invalid
     let dest_dir = if let Some(ref folder) = output_folder {
         let p = std::path::Path::new(folder);
-        if p.is_dir() { p.to_path_buf() } else { exports_dir.clone() }
+        if p.is_dir() {
+            p.to_path_buf()
+        } else {
+            exports_dir.clone()
+        }
     } else {
         exports_dir.clone()
     };
@@ -596,12 +607,11 @@ pub fn save_export(
     let out_path = dest_dir.join(&safe_name);
     let file_size_bytes = pdf_bytes.len() as u64;
 
-    let mut file = fs::File::create(&out_path)
-        .map_err(|e| format!("Cannot create file: {e}"))?;
+    let mut file = fs::File::create(&out_path).map_err(|e| format!("Cannot create file: {e}"))?;
     file.write_all(&pdf_bytes)
         .map_err(|e| format!("Cannot write PDF: {e}"))?;
 
-    let path_str   = out_path.to_string_lossy().into_owned();
+    let path_str = out_path.to_string_lossy().into_owned();
     let folder_str = dest_dir.to_string_lossy().into_owned();
 
     let entry = ExportHistoryEntry {
@@ -717,7 +727,12 @@ pub fn save_snapshot(
 
     prune_snapshots(&app, &sdir)?;
 
-    Ok(SnapshotEntry { id, label, project_name: snap.project_name, saved_at })
+    Ok(SnapshotEntry {
+        id,
+        label,
+        project_name: snap.project_name,
+        saved_at,
+    })
 }
 
 /// Deletes the oldest snapshots beyond the `snapshotRetention` setting.
@@ -756,7 +771,9 @@ fn prune_snapshots(app: &AppHandle, sdir: &Path) -> Result<(), String> {
 pub fn list_snapshots(app: AppHandle, project_id: String) -> Result<Vec<SnapshotEntry>, String> {
     let dir = project_dir(&app, &project_id)?;
     let sdir = snap_dir(&dir);
-    if !sdir.exists() { return Ok(vec![]); }
+    if !sdir.exists() {
+        return Ok(vec![]);
+    }
 
     let mut entries: Vec<SnapshotEntry> = fs::read_dir(&sdir)
         .map_err(|e| e.to_string())?
@@ -846,12 +863,23 @@ pub async fn export_huntmap(app: AppHandle, project_id: String) -> Result<Option
     let dir = project_dir(&app, &project_id)?;
     let meta = read_project_json(&dir)?;
 
-    let safe_name: String = meta.name
+    let safe_name: String = meta
+        .name
         .chars()
-        .map(|c| if c.is_alphanumeric() || c == '-' || c == ' ' { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == ' ' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect();
 
-    let bundle = HuntmapBundle { version: 1, exported_at: now_iso(), meta };
+    let bundle = HuntmapBundle {
+        version: 1,
+        exported_at: now_iso(),
+        meta,
+    };
     let json = serde_json::to_string_pretty(&bundle).map_err(|e| e.to_string())?;
 
     let (tx, rx) = tokio::sync::oneshot::channel::<Option<std::path::PathBuf>>();
@@ -894,8 +922,8 @@ pub async fn import_huntmap(app: AppHandle) -> Result<Option<ProjectSummary>, St
     };
 
     let text = fs::read_to_string(&path).map_err(|e| format!("Cannot read .huntmap file: {e}"))?;
-    let bundle: HuntmapBundle = serde_json::from_str(&text)
-        .map_err(|e| format!("Invalid .huntmap format: {e}"))?;
+    let bundle: HuntmapBundle =
+        serde_json::from_str(&text).map_err(|e| format!("Invalid .huntmap format: {e}"))?;
 
     let new_id = Uuid::new_v4().to_string();
     let now = now_iso();
@@ -1007,8 +1035,8 @@ mod generation_tests {
 
         rewrite_with_new_generation_at(&dir, |m| m.notes = "restored".into()).unwrap();
 
-        let err = guarded_update_at(&dir, tab_view, |m| m.notes = "stale tab value".into())
-            .unwrap_err();
+        let err =
+            guarded_update_at(&dir, tab_view, |m| m.notes = "stale tab value".into()).unwrap_err();
         assert_eq!(err, STALE_GENERATION);
         assert_eq!(
             read_project_json(&dir).unwrap().notes,
@@ -1062,9 +1090,13 @@ mod generation_tests {
         let dir = std::env::temp_dir().join("mapgen_gentest_legacy");
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
-        fs::write(dir.join("project.json"), r#"{"version":1,"id":"t","name":"t","state":null,
+        fs::write(
+            dir.join("project.json"),
+            r#"{"version":1,"id":"t","name":"t","state":null,
             "counties":[],"areaSizeKm2":null,"sheetCount":1,"lastModified":"x",
-            "createdAt":"x","forkedFrom":null}"#).unwrap();
+            "createdAt":"x","forkedFrom":null}"#,
+        )
+        .unwrap();
         assert_eq!(read_project_json(&dir).unwrap().settings_generation, 0);
         // and it can still be saved
         guarded_update_at(&dir, 0, |m| m.notes = "works".into()).unwrap();
@@ -1081,12 +1113,24 @@ mod base64_tests {
         const A: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
         let mut out = String::new();
         for chunk in bytes.chunks(3) {
-            let b = [chunk[0], *chunk.get(1).unwrap_or(&0), *chunk.get(2).unwrap_or(&0)];
+            let b = [
+                chunk[0],
+                *chunk.get(1).unwrap_or(&0),
+                *chunk.get(2).unwrap_or(&0),
+            ];
             let n = ((b[0] as u32) << 16) | ((b[1] as u32) << 8) | b[2] as u32;
             out.push(A[(n >> 18) as usize & 63] as char);
             out.push(A[(n >> 12) as usize & 63] as char);
-            out.push(if chunk.len() > 1 { A[(n >> 6) as usize & 63] as char } else { '=' });
-            out.push(if chunk.len() > 2 { A[n as usize & 63] as char } else { '=' });
+            out.push(if chunk.len() > 1 {
+                A[(n >> 6) as usize & 63] as char
+            } else {
+                '='
+            });
+            out.push(if chunk.len() > 2 {
+                A[n as usize & 63] as char
+            } else {
+                '='
+            });
         }
         out
     }
@@ -1097,7 +1141,10 @@ mod base64_tests {
         assert_eq!(base64_decode("TQ==").unwrap(), b"M");
         assert_eq!(base64_decode("TWE=").unwrap(), b"Ma");
         assert_eq!(base64_decode("TWFu").unwrap(), b"Man");
-        assert_eq!(base64_decode("SGVsbG8sIFdvcmxkIQ==").unwrap(), b"Hello, World!");
+        assert_eq!(
+            base64_decode("SGVsbG8sIFdvcmxkIQ==").unwrap(),
+            b"Hello, World!"
+        );
     }
 
     /// Every payload length hits a different padding case; a PDF is arbitrary
@@ -1121,7 +1168,10 @@ mod base64_tests {
     /// Line-wrapped input decodes rather than silently corrupting.
     #[test]
     fn tolerates_whitespace() {
-        assert_eq!(base64_decode("SGVs\nbG8s\r\n IFdvcmxkIQ==").unwrap(), b"Hello, World!");
+        assert_eq!(
+            base64_decode("SGVs\nbG8s\r\n IFdvcmxkIQ==").unwrap(),
+            b"Hello, World!"
+        );
     }
 
     /// A payload that isn't base64 is refused instead of producing a corrupt
