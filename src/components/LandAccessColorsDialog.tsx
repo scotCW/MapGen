@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ReactElement } from "react";
 import type {
   AccessColorScheme, CategoryStyle, RoutesStyle,
   FillPattern, LineStyle, NamedScheme,
@@ -35,7 +36,7 @@ const CAT_META: Record<string, { label: string; defaultLabel: string }> = {
 // SVG pattern helpers
 // ---------------------------------------------------------------------------
 
-function patternDef(id: string, color: string, pattern: FillPattern): JSX.Element | null {
+function patternDef(id: string, color: string, pattern: FillPattern): ReactElement | null {
   if (pattern === "solid" || pattern === "none") return null;
   const s = color;
   if (pattern === "diagonal") {
