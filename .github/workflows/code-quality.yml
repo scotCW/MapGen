@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [master]
 
+# Both jobs only checkout and build — read-only is all GITHUB_TOKEN needs.
+permissions:
+  contents: read
+
 jobs:
   frontend:
     name: Frontend typecheck + build
