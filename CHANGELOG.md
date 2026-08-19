@@ -17,7 +17,7 @@ Initial prerelease. **macOS only** — see the `macos` tag; a universal (arm64 +
 - CI pinned Node 20; a dependency (`@mapbox/jsonlint-lines-primitives`, pulled in by maplibre-gl) requires Node ≥22 — bumped the workflow.
 - Existing Rust source wasn't `rustfmt`-clean — applied `cargo fmt` (whitespace only).
 - `tauri.conf.json`'s version wasn't bumped along with `package.json`/`Cargo.toml` for the 0.0.1 release — corrected.
-- App icon (`icon.jpeg`) had a checkerboard "transparency placeholder" baked into its pixels (JPEG has no alpha channel), visible behind the logo in every generated icon size. Added `scripts/strip_icon_checkerboard.py` to rebuild it with real alpha transparency; `make_icons.sh` now sources the corrected `icon.png`. Not shipped in the 0.0.1 build — lands with the next code release.
+- App icon (`icon.jpeg`) had a checkerboard "transparency placeholder" baked into its pixels (JPEG has no alpha channel), visible behind the logo in every generated icon size. `scripts/strip_icon_checkerboard.py` rebuilds it: strip the checkerboard to real transparency, then composite onto an opaque cream/parchment background per Apple's macOS HIG (macOS icons must be fully opaque and fill the canvas themselves — a transparent icon is nearly invisible against the Dock's dark material in dark mode). `make_icons.sh` now sources the corrected `icon.png`. Not shipped in the 0.0.1 build — lands with the next code release.
 
 ### Dependencies
 Bumped via Dependabot (individual PR commit history for these was lost during a later `git filter-repo` identity rewrite — see below — but the resulting versions are unchanged and verified against the live files):
