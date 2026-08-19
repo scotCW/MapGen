@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
-# Converts icon.jpeg → all required icon formats for Tauri and the Swift app.
+# Converts icon.png → all required icon formats for Tauri and the Swift app.
+# icon.png carries real alpha transparency (see strip_icon_checkerboard.py) —
+# it's generated from the original icon.jpeg, which had a checkerboard
+# "transparency placeholder" baked into its pixels since JPEG has no alpha.
 # Uses only macOS system tools: sips, iconutil, python3 (stdlib only).
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-SRC="$REPO/icon.jpeg"
+SRC="$REPO/icon.png"
 ICONS_DIR="$REPO/src-tauri/icons"
 ICONSET="$(mktemp -d)/icon.iconset"
 
 if [[ ! -f "$SRC" ]]; then
-  echo "Error: $SRC not found." >&2
+  echo "Error: $SRC not found. Run scripts/strip_icon_checkerboard.py first." >&2
   exit 1
 fi
 
@@ -18,14 +21,14 @@ mkdir -p "$ICONS_DIR" "$ICONSET"
 echo "==> Source: $SRC ($(sips -g pixelWidth -g pixelHeight "$SRC" | awk '/pixel/{printf $2" "}')px)"
 
 # ---------------------------------------------------------------------------
-# Helper: resize JPEG → PNG at WxH
+# Helper: resize PNG → PNG at WxH (sips preserves alpha)
 # ---------------------------------------------------------------------------
 RGBA_SCRIPT="$REPO/scripts/png_to_rgba.py"
 
 resize() {
   local w=$1 h=$2 out=$3
   sips -z "$h" "$w" "$SRC" --out "$out" --setProperty format png -s formatOptions best > /dev/null 2>&1
-  python3 "$RGBA_SCRIPT" "$out"  # Tauri requires RGBA PNGs, not RGB
+  python3 "$RGBA_SCRIPT" "$out"  # no-op safety net if sips ever produces RGB-only
 }
 
 # ---------------------------------------------------------------------------
