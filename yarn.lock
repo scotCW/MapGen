@@ -360,7 +360,7 @@
   dependencies:
     kdbush "^4.1.0"
 
-"@maplibre/maplibre-gl-style-spec@^26.3.0":
+"@maplibre/maplibre-gl-style-spec@^26.4.1":
   version "26.4.1"
   resolved "https://registry.yarnpkg.com/@maplibre/maplibre-gl-style-spec/-/maplibre-gl-style-spec-26.4.1.tgz#e9cf3ed8f33b7f57c730f550375cb7ff115c1a93"
   integrity sha512-I/qcIKVFHFSg1Meu/eqHrkSTjIez0gCsSaK56TNPutM3TkE61aSq6F1cZ4Kg4KiNs3cpViLtubDjfyRcQCdEJQ==
@@ -492,7 +492,7 @@
   resolved "https://registry.yarnpkg.com/@rolldown/pluginutils/-/pluginutils-1.0.1.tgz#e3fcee093fbb5ce765e1ad088ff4de2889f6f9be"
   integrity sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==
 
-"@tauri-apps/api@^2", "@tauri-apps/api@^2.10.1", "@tauri-apps/api@^2.11.0":
+"@tauri-apps/api@^2", "@tauri-apps/api@^2.11.0":
   version "2.11.1"
   resolved "https://registry.yarnpkg.com/@tauri-apps/api/-/api-2.11.1.tgz#cd6b13fc26403ca095a02e39ecdbec8048d2872d"
   integrity sha512-M2FPuYND2m+wh5hfW9ZpSdxMPdEJovPBWwoHJmwUpysTYNHaOkVFN419m/K0LIgjb/7KU2vBgsUepJWugQCvAA==
@@ -569,19 +569,19 @@
     "@tauri-apps/cli-win32-ia32-msvc" "2.11.4"
     "@tauri-apps/cli-win32-x64-msvc" "2.11.4"
 
-"@tauri-apps/plugin-dialog@^2.7.2":
-  version "2.7.2"
-  resolved "https://registry.yarnpkg.com/@tauri-apps/plugin-dialog/-/plugin-dialog-2.7.2.tgz#322d0874bae71fed6d10c76168fa0f7f4d5dd875"
-  integrity sha512-pX0IGm1I3I6wc+zeKYcq1GSqogK6okCNX5fOdaNU5ab1AjGS6l1E5wFNjEb7meg7ZFSp0JUs+0jQGQNyOvLrsg==
+"@tauri-apps/plugin-dialog@^2.7.3":
+  version "2.7.3"
+  resolved "https://registry.yarnpkg.com/@tauri-apps/plugin-dialog/-/plugin-dialog-2.7.3.tgz#7e6d375fec8e39d2a90294604a9d77e66c39a072"
+  integrity sha512-CRgE+7TP4tvq9MjBU6f04NLTFIqVMLKHk3hAqlhil00ngK9ACTrXPH3oHpKMProxILodd3YjBoKbMwSI4IEcfA==
   dependencies:
     "@tauri-apps/api" "^2.11.0"
 
 "@tauri-apps/plugin-sql@^2":
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/@tauri-apps/plugin-sql/-/plugin-sql-2.4.0.tgz#06402e6fe4c219a74b8aab9f890feb322754d9a1"
-  integrity sha512-SIICc5JlnK6OrBZzOw7MmhXHPlmASpt5zLWIu10WW4kLr5cDYOXHdV2MoCgYQkgZLQfyBYgF3SQa5XCisUiQkw==
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/@tauri-apps/plugin-sql/-/plugin-sql-2.4.1.tgz#2922914c49dc7b1d2a3e74270fe0662b8845d79c"
+  integrity sha512-w9fImJ2XaCLFEj+kLbs8nO/Idq89mpjl//Bm37JZo8AugbaVzaW5iHTjjcozHjtLgjb0IAQjYromv0YpzDOFkA==
   dependencies:
-    "@tauri-apps/api" "^2.10.1"
+    "@tauri-apps/api" "^2.11.0"
 
 "@types/babel__core@^7.20.5":
   version "7.20.5"
@@ -622,9 +622,9 @@
   integrity sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==
 
 "@types/react-dom@^19":
-  version "19.2.5"
-  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-19.2.5.tgz#d4ecf8d704cab59901d3fbb0975b6f855306595f"
-  integrity sha512-fMPwH9v7r/pp43yUd2/Mbiex5KouJwwR3dzHkhLREUC6764VyDsqxhAxv6OFEYR1RhjOyD1naqba8ECDBe7ZQg==
+  version "19.2.7"
+  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-19.2.7.tgz#eba78fc6201e564986ec40d56c86c8434593cace"
+  integrity sha512-I8bPpDLcHBv1qiIiXDCy71Rt8eQDKJP0sMSWJphDdAcdqiJ1sGpZamavoEIRZmYzjia9LuEb2HlYdDpmoENpvQ==
 
 "@types/react@^19":
   version "19.2.18"
@@ -962,16 +962,16 @@ lru-cache@^5.1.1:
     yallist "^3.0.2"
 
 maplibre-gl@^6:
-  version "6.6.0"
-  resolved "https://registry.yarnpkg.com/maplibre-gl/-/maplibre-gl-6.6.0.tgz#e845757656b3a768d31fc38eceaa1120ba483f19"
-  integrity sha512-EQql6eZYPhbHvJpqY4AwoiuLkUfXFRBHk67S8mDtzNo1F/jAo7xAxunIzO7gJ1vwTcPMgrK9b64dqKHvnkTlDQ==
+  version "6.7.0"
+  resolved "https://registry.yarnpkg.com/maplibre-gl/-/maplibre-gl-6.7.0.tgz#c2dc869c31d588e073ff1eebb40c67e072fb3f09"
+  integrity sha512-Y1Q1+UP9WXou0DUrnaFdDsoMqiMCWy6aS968IBUaQ2eZi6H1/kPCfpfZOWXFJZbeKMkX9Wo6OFzY/k48qqPf3Q==
   dependencies:
     "@mapbox/point-geometry" "^1.1.0"
     "@mapbox/tiny-sdf" "^2.2.0"
     "@mapbox/unitbezier" "^1.0.0"
     "@mapbox/vector-tile" "^3.0.0"
     "@maplibre/geojson-vt" "^6.1.1"
-    "@maplibre/maplibre-gl-style-spec" "^26.3.0"
+    "@maplibre/maplibre-gl-style-spec" "^26.4.1"
     "@maplibre/mlt" "^1.2.0"
     "@maplibre/vt-pbf" "^4.3.2"
     "@types/geojson" "^7946.0.16"
