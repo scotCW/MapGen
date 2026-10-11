@@ -28,6 +28,26 @@ Default to the **Tauri build** unless you specifically need the Swift shell — 
 - Magnetic declination (WMM2025) and compass rose on exported maps
 - Offline-first: download county data once, generate maps without a connection
 
+## Installing on Windows
+
+Windows 10 or 11, x86_64 (64-bit Intel/AMD).
+
+1. Download `Hunting-Map-Generator-<version>-windows-x64-setup.exe` from the latest [Windows release](https://github.com/scotCW/MapGen/releases) (tagged `windows`).
+2. Run it. The installer is **not code-signed yet**, so Windows SmartScreen shows "Windows protected your PC" — click **More info → Run anyway**.
+3. It installs **for your user account only** — no Administrator prompt — to `%LOCALAPPDATA%\Hunting Map Generator`, and adds a Start menu shortcut.
+
+**WebView2** (the browser engine the app renders with) is built into Windows 11 and current Windows 10. On older Windows 10 builds the installer downloads it automatically, so the first install needs an internet connection there.
+
+**Where your data lives:** projects, downloaded county data, presets, settings, and logs are stored in `%APPDATA%\com.huntingmapgenerator.app\` (paste that into File Explorer's address bar). Exported PDFs go to each project's `exports` folder unless you pick another output folder on the Export tab. Uninstalling the app leaves this folder in place; delete it yourself to remove all data.
+
+**Uninstall:** Settings → Apps → Installed apps → *Hunting Map Generator* → Uninstall.
+
+**Tips**
+- *Settings → Display* has a **Text size** option and a **Wide / curved screen** layout (auto-detected on 21:9 and wider monitors) that keeps the app in a centred column.
+- On a slow connection, county data downloads show progress in megabytes; a download only fails if no data arrives for 90 seconds. Map previews and PDF exports stream the basemap tiles, so they need a connection.
+
+macOS users: download the `.dmg` from the release tagged `macos` (unsigned — right-click the app → Open on first launch).
+
 ## Development
 
 Requires [Yarn](https://yarnpkg.com) and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your platform.
@@ -36,6 +56,8 @@ Requires [Yarn](https://yarnpkg.com) and the [Tauri prerequisites](https://tauri
 yarn install
 yarn tauri dev
 ```
+
+**On Windows**, Rust must use the MSVC toolchain (`rustup default stable-x86_64-pc-windows-msvc`) with the Visual Studio C++ Build Tools installed. `.\scripts\build-windows.ps1 -Deps` installs the prerequisites via winget, then `.\scripts\build-windows.ps1` builds the installer into `src-tauri\target\release\bundle\nsis\`. Keep that script saved as **UTF-8 with BOM** — Windows PowerShell 5.1 (the default on Windows 11) reads BOM-less scripts as ANSI and fails on its non-ASCII characters.
 
 ## Building
 
