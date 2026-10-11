@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.0.3] - 2026-10-11
+
+Prerelease — **Windows and macOS** (see the `windows` and `macos` tags). Dependency update; no app behaviour changes beyond what the upgraded libraries bring.
+
+### Dependencies
+Merged Dependabot PRs, verified together against `master` (typecheck, Rust tests, clippy with `-D warnings`, fmt, and a full `tauri build` — CI alone doesn't run `tauri build`, which is what checks that the Rust plugin crates and their npm packages are on matching versions):
+- Rust (#22): `tauri` 2.11.5→2.11.6, `tauri-build` 2.6.3→2.7.1, `tauri-plugin-dialog` 2.7.3→2.8.1, `tauri-plugin-opener` 2.5.5→2.7.0, `tauri-plugin-shell` 2.3.6→2.4.0, `tauri-plugin-sql` 2.4.1→2.5.0, `uuid` 1.26.0→1.27.0, `tokio` 1.53.1→1.53.2.
+- npm (#23): `@tauri-apps/api` 2.11.1→2.12.1, `@tauri-apps/cli` 2.11.5→2.12.1, `@tauri-apps/plugin-dialog` 2.7.3→2.8.1, `@tauri-apps/plugin-sql` 2.4.1→2.5.0, `vite` 8.3.1→8.3.2. #22 and #23 must land together — `tauri build` refuses mismatched plugin versions.
+- `rustls` 0.23.43→0.23.45 (#24), `source-map-js` 1.2.1→1.2.2 (#25).
+- Regenerated Tauri capability schemas (`src-tauri/gen/schemas/`) for the new plugin versions.
+
 ## [0.0.2] - 2026-10-11
 
 Prerelease. **Windows only** — see the `windows` tag; an x86_64 NSIS installer (per-user, no Administrator prompt). Unsigned, so Windows SmartScreen warns on first run (More info → Run anyway). Fixes from Windows 11 testing.
