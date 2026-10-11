@@ -81,6 +81,31 @@ export const STANDARD_SCALES: ScaleSpec[] = [
   { value: 100000, label: "1:100,000", plainLabel: "about 0.6 in / mile" },
 ];
 
+/**
+ * Relative tolerance within which a computed scale is treated as equal to a
+ * standard one. Deriving the scale back from an on-map box goes through
+ * degree↔metre conversions that drift a little whenever the box moves in
+ * latitude — enough to turn a chosen 1:50,000 into "1:49,909".
+ */
+export const SCALE_SNAP_TOLERANCE = 0.01;
+
+/** Returns the standard scale `scale` is within tolerance of, else `scale`. */
+export function snapToStandardScale(scale: number): number {
+  const hit = STANDARD_SCALES.find((s) => Math.abs(scale - s.value) / s.value <= SCALE_SNAP_TOLERANCE);
+  return hit ? hit.value : scale;
+}
+
+/**
+ * Repairs a format whose custom scale is really a drifted standard scale
+ * (saved by older builds), so it shows and prints as e.g. 1:50,000 again.
+ */
+export function normalizeFormatScale(fmt: FormatSettings): FormatSettings {
+  if (fmt.scaleCustom == null) return fmt;
+  const snapped = snapToStandardScale(fmt.scaleCustom);
+  if (snapped === fmt.scaleCustom) return fmt;
+  return { ...fmt, scale: snapped, scaleCustom: null };
+}
+
 // ---------------------------------------------------------------------------
 // Geometry helpers
 // ---------------------------------------------------------------------------

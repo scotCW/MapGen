@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Builds the Windows installer for Hunting Map Generator (x86_64).
 
@@ -91,3 +91,4 @@ Write-Host "==> Built:" -ForegroundColor Cyan
 Get-ChildItem $bundleDir -Filter "*.exe" | ForEach-Object {
   "{0,10:N0} KB  {1}" -f ($_.Length / 1KB), $_.Name
 }
+

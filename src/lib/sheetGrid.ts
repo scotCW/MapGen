@@ -4,16 +4,14 @@
  */
 
 import type { FormatSettings } from "../types/format";
-import { effectivePaper, MARGIN_SIZES } from "../types/format";
+import type { MapElements } from "../types/elements";
+import { ELEMENT_DEFAULTS } from "../types/elements";
 import type { Bounds } from "./geo";
 import { DEG_PER_M_LAT, degPerMLng } from "./geo";
+import { computePageLayout } from "./pageLayout";
 
-// Keep in sync with exportPdf.ts band heights
-const PT_PER_IN = 72;
-const TITLE_H   = 42;
-const SCALE_H   = 54;
-const DISC_H    = 44;
-const DISC_SCALE_GAP_PT = 10; // must match exportPdf.ts DISC_SCALE_GAP_PT
+/** Default overlap on each shared sheet edge, in paper inches. */
+export const DEFAULT_OVERLAP_IN = 0.5;
 
 export interface SheetCell {
   row: number;          // 0 = northernmost row
@@ -81,18 +79,15 @@ export function computeSheetGrid(
   centerLng: number,
   centerLat: number,
   scale: number,
+  elements: MapElements = ELEMENT_DEFAULTS,
 ): SheetGrid {
   const { across, down } = getSheetDimensions(fmt);
 
-  const paper    = effectivePaper(fmt);
-  const marginIn = MARGIN_SIZES[fmt.margins] ?? 0.5;
-
-  const usableW = paper.w - marginIn * 2;
-  const usableH = paper.h - marginIn * 2;
-
-  // Map area (excluding carto bands)
-  const mapW = usableW;
-  const mapH = usableH - (TITLE_H + SCALE_H + DISC_H + DISC_SCALE_GAP_PT) / PT_PER_IN;
+  // Map area per sheet (inside the neatline, excluding the carto bands) —
+  // from the shared page layout so it always matches what the PDF draws.
+  const layout = computePageLayout(fmt, elements, across * down > 1);
+  const mapW = layout.mapWidthIn;
+  const mapH = layout.mapHeightIn;
 
   const IN_TO_M = 0.0254;
   const sheetGW = mapW  * scale * IN_TO_M;  // ground metres covered by one sheet width

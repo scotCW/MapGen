@@ -4,6 +4,12 @@ import type { ThemeMode } from "../theme/ThemeContext";
 import { useExperience } from "../theme/ExperienceContext";
 import type { ExperienceLevel } from "../theme/ExperienceContext";
 import { invoke } from "../lib/ipc";
+import {
+  setAppSetting,
+  TEXT_SCALES, TEXT_SCALE_KEY, parseTextScale, applyTextScale,
+  WIDE_LAYOUT_KEY, parseWideMode, applyWideMode, detectWideScreen,
+} from "../lib/appSettings";
+import type { TextScale, WideMode } from "../lib/appSettings";
 import { LandAccessColorsDialog } from "./LandAccessColorsDialog";
 import type { PresetEntry } from "../types/preset";
 import "./SettingsModal.css";
@@ -33,6 +39,9 @@ export function SettingsModal({ onClose }: Props) {
 
   // Safety warning toggle state
   const [hideDisclaimer, setHideDisclaimer] = useState(false);
+  // Display
+  const [textScale, setTextScale] = useState<TextScale>(parseTextScale(undefined));
+  const [wideMode, setWideMode] = useState<WideMode>("auto");
   const [showColorEditor, setShowColorEditor] = useState(false);
   // Unlock flow: "locked" | "entering" | "unlocked"
   const [unlockState, setUnlockState] = useState<"locked" | "entering" | "unlocked">("locked");
@@ -79,9 +88,9 @@ export function SettingsModal({ onClose }: Props) {
         if (s.units === "imperial" || s.units === "metric") {
           setUnitsState(s.units as Units);
         }
-        if (s.hide_access_disclaimer === true) {
-          setHideDisclaimer(true);
-        }
+        setHideDisclaimer(s.hide_access_disclaimer === true);
+        setTextScale(parseTextScale(s[TEXT_SCALE_KEY]));
+        setWideMode(parseWideMode(s[WIDE_LAYOUT_KEY]));
       })
       .catch(console.error);
   }, []);
@@ -112,8 +121,23 @@ export function SettingsModal({ onClose }: Props) {
 
   function toggleDisclaimer(hidden: boolean) {
     setHideDisclaimer(hidden);
-    invoke("set_setting", { key: "hide_access_disclaimer", value: hidden }).catch(console.error);
+    // Broadcast so the open Layers tab hides/shows the note right away.
+    setAppSetting("hide_access_disclaimer", hidden).catch(console.error);
   }
+
+  function changeTextScale(pct: TextScale) {
+    setTextScale(pct);
+    applyTextScale(pct);
+    setAppSetting(TEXT_SCALE_KEY, pct).catch(console.error);
+  }
+
+  function changeWideMode(mode: WideMode) {
+    setWideMode(mode);
+    applyWideMode(mode);
+    setAppSetting(WIDE_LAYOUT_KEY, mode).catch(console.error);
+  }
+
+  const TEXT_LABELS: Record<TextScale, string> = { 100: "Normal", 115: "Large", 130: "Larger", 150: "Largest" };
 
   return (
     <>
@@ -162,6 +186,48 @@ export function SettingsModal({ onClose }: Props) {
               ))}
             </div>
           </div>
+        </section>
+
+        <section className="settings-section">
+          <h3 className="settings-section-title">Display</h3>
+          <div className="settings-row">
+            <span className="settings-label">Text size</span>
+            <div className="settings-btn-group" role="group" aria-label="Text size">
+              {TEXT_SCALES.map((pct) => (
+                <button
+                  key={pct}
+                  className={`settings-btn${textScale === pct ? " active" : ""}`}
+                  onClick={() => changeTextScale(pct)}
+                  aria-pressed={textScale === pct}
+                  title={`${pct}%`}
+                >
+                  {TEXT_LABELS[pct]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="settings-row">
+            <span className="settings-label">Wide / curved screen</span>
+            <div className="settings-btn-group" role="group" aria-label="Wide screen layout">
+              {(["auto", "on", "off"] as WideMode[]).map((m) => (
+                <button
+                  key={m}
+                  className={`settings-btn${wideMode === m ? " active" : ""}`}
+                  onClick={() => changeWideMode(m)}
+                  aria-pressed={wideMode === m}
+                >
+                  {m === "auto" ? "Auto" : m === "on" ? "On" : "Off"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="settings-hint">
+            Wide layout keeps the app in a centred column so controls aren't pushed to the far edges
+            of an ultrawide or curved monitor.{" "}
+            {wideMode === "auto" && (detectWideScreen()
+              ? "Auto: an ultrawide screen was detected, so it's on."
+              : "Auto: this screen isn't ultrawide, so it's off.")}
+          </p>
         </section>
 
         <section className="settings-section">
@@ -239,7 +305,8 @@ export function SettingsModal({ onClose }: Props) {
                 </div>
                 <div className="settings-danger-desc">
                   The "verify before you hunt" note shown at the bottom of the Layers panel.
-                  Hiding it does not remove the safety-critical disclaimer from exported PDFs.
+                  To remove the warning band from printed maps, untick <strong>Access disclaimer</strong> in
+                  Preview → Map Elements and press Save &amp; Apply.
                 </div>
               </div>
             </div>
@@ -412,8 +479,9 @@ export function SettingsModal({ onClose }: Props) {
 
       <div className="settings-footer">
         <span className="settings-footer-note">
-          Hunting Map Generator · All data should be independently verified before use.
+          Changes apply immediately. All data should be independently verified before use.
         </span>
+        <button className="settings-done-btn" onClick={onClose}>Save &amp; Close</button>
       </div>
     </dialog>
 

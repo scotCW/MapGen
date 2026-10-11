@@ -2,6 +2,31 @@
 
 All notable changes to this project are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.0.2] - 2026-10-11
+
+Prerelease. **Windows only** — see the `windows` tag; an x86_64 NSIS installer (per-user, no Administrator prompt). Unsigned, so Windows SmartScreen warns on first run (More info → Run anyway). Fixes from Windows 11 testing.
+
+### Fixed
+- **Magnetic declination was wrong**, not just stale: the WMM2025 Legendre recursion mixed fully-normalised constants into a Schmidt seed, and the geodetic rotation had a sign error. Denver read ~9.2°E and Seattle ~19.4°E; now 7.5°E / 14.9°E, matching NOAA. The compass rose shows the epoch it was computed for (e.g. "WMM2025 · 2026.8").
+- **Map element toggles didn't affect the export.** The Preview checkboxes only changed the on-screen mock-up — unticking the title block still printed it. Elements are now saved per project (`elements` in project.json, `save_map_elements` command) and the PDF honours them. Every element can be turned off, including the access disclaimer.
+- **`get_settings` dropped every key `AppSettings` doesn't list** — `hide_access_disclaimer`, `experience_level`, the export preferences and the first-run acknowledgement were saved but never read back, so those settings appeared to do nothing. It now returns all stored keys over the defaults.
+- **Scale drift** (e.g. 1:49,909 for a chosen 1:50,000): moving the area box re-derived the scale from the moved box's degree extents. Moving no longer changes the scale; back-computed scales snap within 1%, and drifted custom scales saved by older builds are repaired on load.
+- **Print layout overlaps**: the ratio text ran into the warning box, warning text overflowed its box, coordinate labels sat under the neatline and inside the title block, and the legend could overlap the map. Layout now comes from one module (`src/lib/pageLayout.ts`) with reserved space for every band and label; the legend wraps into columns. Checked across 1,280 paper/layout/scale/element combinations with no text overlaps.
+- Multi-sheet overview page was stretched for non-square grids (2×1, 3×2); it now keeps its true aspect ratio.
+- Data downloads gave no feedback on slow networks and hid failures: the error was only rendered inside the progress view, which vanished as soon as the download stopped. The button now shows "Starting…", progress shows bytes received, results/errors stay on screen, and the 120s total timeout is replaced by connect + 90s stall timeouts (files stream to disk).
+- Project names with characters the PDF fonts can't encode (e.g. emoji) no longer make export fail.
+- Windows: export paths with `\` separators display correctly; "Show in Finder" reads "Show in folder".
+
+### Changed
+- **Preview renders the real page**: drawing goes through a small painter interface (`src/lib/painter.ts`) with pdf-lib and SVG back ends, so the preview and the exported PDF come from the same code. Added zoom (buttons, Ctrl+scroll, Fit page/width, 100%) and drag-to-pan.
+- Preview element changes are staged behind a **Save & Apply** button; the Preview re-reads the project on each visit.
+- Layers tab fits and outlines the printed area (and follows it when the area changes) instead of centring once at a fixed zoom.
+- Area tab shades the parts of the paper footprint that won't print as map, so the clear window is exactly the printed extent.
+
+### Added
+- Settings → Display: **Text size** (Normal / Large / Larger / Largest; default Large, via native webview zoom — new `core:webview:allow-set-webview-zoom` capability) and **Wide / curved screen** layout (Auto-detects 21:9+ monitors, or On/Off) that centres the app in a comfortable-width column.
+- Settings dialog **Save & Close** button; settings changes broadcast so open screens update immediately.
+
 ## [0.0.1] - 2026-08-18
 
 Initial prerelease. **macOS only** — see the `macos` tag; a universal (arm64 + x86_64) build. Unsigned/not notarized, so Gatekeeper requires right-click → Open on first launch. The Xcode/Swift build (`swift-app/`) isn't packaged in this release — its signing isn't set up yet.

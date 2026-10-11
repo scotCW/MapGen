@@ -145,43 +145,47 @@ export function getMagneticDeclination(
   const cosT  = Math.cos(theta);
   const sinT  = Math.sin(theta);
 
-  // Time-varying Gauss coefficients
+  // Time-varying Gauss coefficients, pre-multiplied by the Schmidt
+  // semi-normalisation factors so they pair with the Gauss-normalised
+  // Legendre functions below (same split as NOAA's reference geomag.c).
+  const S = schmidtFactors();
   const g = buildTable();
   const h = buildTable();
   for (const [n, m, gv, hv, gd, hd] of COF) {
-    g[n][m] = gv + gd * dt;
-    h[n][m] = hv + hd * dt;
+    g[n][m] = (gv + gd * dt) * S[n][m];
+    h[n][m] = (hv + hd * dt) * S[n][m];
   }
 
-  // Schmidt quasi-normal Legendre functions + theta-derivatives
+  // Gauss-normalised associated Legendre functions + theta-derivatives.
+  // (The previous version mixed fully-normalised recursion constants into a
+  // Schmidt seed, which skewed every term above degree 1 — e.g. Denver came
+  // out ~9.2°E instead of NOAA's ~7.5°E.)
   const P  = buildTable();
   const dP = buildTable();
-  P[0][0] = 1;   dP[0][0] = 0;
-  P[1][0] = cosT; dP[1][0] = -sinT;
-  P[1][1] = sinT; dP[1][1] =  cosT;
-
-  for (let n = 2; n <= MAX_N; n++) {
-    // m = n  (diagonal)
-    const s = Math.sqrt((2 * n - 1) / (2 * n));
-    P[n][n]  = sinT * P[n - 1][n - 1] * s;
-    dP[n][n] = (cosT * P[n - 1][n - 1] + sinT * dP[n - 1][n - 1]) * s;
-    // m = n-1
-    const t = Math.sqrt(2 * n - 1);
-    P[n][n - 1]  = cosT * P[n - 1][n - 1] * t;
-    dP[n][n - 1] = (cosT * dP[n - 1][n - 1] - sinT * P[n - 1][n - 1]) * t;
-    // m < n-1
-    for (let m = n - 2; m >= 0; m--) {
-      const K1 = Math.sqrt((4 * n * n - 1) / (n * n - m * m));
-      const K2 = Math.sqrt(((n - 1) * (n - 1) - m * m) / (4 * (n - 1) * (n - 1) - 1));
-      P[n][m]  = K1 * cosT * P[n - 1][m]  - K2 * P[n - 2][m];
-      dP[n][m] = K1 * (cosT * dP[n - 1][m] - sinT * P[n - 1][m]) - K2 * dP[n - 2][m];
+  P[0][0] = 1;
+  for (let n = 1; n <= MAX_N; n++) {
+    for (let m = 0; m <= n; m++) {
+      if (n === m) {
+        P[n][m]  = sinT * P[n - 1][m - 1];
+        dP[n][m] = sinT * dP[n - 1][m - 1] + cosT * P[n - 1][m - 1];
+      } else if (n === 1) {
+        P[n][m]  = cosT * P[0][0];
+        dP[n][m] = cosT * dP[0][0] - sinT * P[0][0];
+      } else {
+        const k   = ((n - 1) ** 2 - m * m) / ((2 * n - 1) * (2 * n - 3));
+        const p2  = m > n - 2 ? 0 : P[n - 2][m];
+        const dp2 = m > n - 2 ? 0 : dP[n - 2][m];
+        P[n][m]  = cosT * P[n - 1][m] - k * p2;
+        dP[n][m] = cosT * dP[n - 1][m] - sinT * P[n - 1][m] - k * dp2;
+      }
     }
   }
 
-  // Sum the spherical harmonic series
-  let Btheta = 0; // field component in theta direction (≈ −X geocentric)
-  let Bphi   = 0; // field component in phi direction (≈ Y geocentric)
-  let Br     = 0; // field component in r direction (≈ −Z geocentric)
+  // Sum the spherical harmonic series (geocentric r, theta, phi components)
+  let Btheta = 0;
+  let Bphi   = 0;
+  let Br     = 0;
+  const sinTSafe = Math.max(sinT, 1e-10);
   for (let n = 1; n <= MAX_N; n++) {
     const ratio = (RE / r) ** (n + 2);
     for (let m = 0; m <= n; m++) {
@@ -189,20 +193,18 @@ export function getMagneticDeclination(
       const sinML = Math.sin(m * lonR);
       const ghmC  = g[n][m] * cosML + h[n][m] * sinML;
       const ghmS  = g[n][m] * sinML - h[n][m] * cosML;
-      Btheta -= ratio * ghmC * dP[n][m];
-      Bphi   += ratio * m * ghmS * (P[n][m] / Math.max(sinT, 1e-10));
       Br     += ratio * (n + 1) * ghmC * P[n][m];
+      Btheta -= ratio * ghmC * dP[n][m];
+      Bphi   += ratio * m * ghmS * P[n][m] / sinTSafe;
     }
   }
 
-  // Rotate geocentric (Btheta, Bphi, Br) → geodetic (X = north, Y = east, Z = down).
-  // The rotation angle psi is tiny (<0.2°) almost everywhere in CONUS, but near
-  // the poles Z dominates over the horizontal components, so dropping it would
-  // throw off declination there (matters for high-latitude Alaska units).
-  const psi = latR - (Math.PI / 2 - theta); // geodetic − geocentric colatitude offset
-  const Z   = -Br;
-  const X   = -Btheta * Math.cos(psi) - Z * Math.sin(psi); // north component (geodetic)
-  const Y   =  Bphi;                                        // east component (same in both frames)
+  // Rotate geocentric → geodetic (X = north, Y = east). psi is the
+  // geodetic − geocentric latitude offset; tiny in CONUS, but it matters at
+  // high latitudes where the vertical component dominates.
+  const psi = latR - (Math.PI / 2 - theta);
+  const X   = -Btheta * Math.cos(psi) - Br * Math.sin(psi);
+  const Y   =  Bphi;
 
   return (Math.atan2(Y, X) * 180) / Math.PI;
 }
@@ -213,6 +215,32 @@ export function currentDecimalYear(): number {
   const start = new Date(now.getFullYear(), 0, 1).getTime();
   const end   = new Date(now.getFullYear() + 1, 0, 1).getTime();
   return now.getFullYear() + (now.getTime() - start) / (end - start);
+}
+
+/** True when `decimalYear` falls inside the model's published validity window. */
+export function isWmmValid(decimalYear = currentDecimalYear()): boolean {
+  return decimalYear >= WMM_VALID_FROM && decimalYear < WMM_VALID_TO;
+}
+
+/** Map-label form of the epoch the declination is computed for, e.g. "2026.8". */
+export function declinationEpochLabel(decimalYear = currentDecimalYear()): string {
+  return decimalYear.toFixed(1);
+}
+
+// Schmidt semi-normalisation factors S[n][m] (geomag.c recurrence).
+let schmidtCache: number[][] | null = null;
+function schmidtFactors(): number[][] {
+  if (schmidtCache) return schmidtCache;
+  const S = buildTable();
+  S[0][0] = 1;
+  for (let n = 1; n <= MAX_N; n++) {
+    S[n][0] = S[n - 1][0] * (2 * n - 1) / n;
+    for (let m = 1; m <= n; m++) {
+      S[n][m] = S[n][m - 1] * Math.sqrt(((n - m + 1) * (m === 1 ? 2 : 1)) / (n + m));
+    }
+  }
+  schmidtCache = S;
+  return S;
 }
 
 function buildTable(): number[][] {

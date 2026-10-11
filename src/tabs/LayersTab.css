@@ -256,3 +256,17 @@
 .layers-tab .maplibregl-ctrl-bottom-left {
   bottom: 4px;
 }
+
+.lyr-fit-btn {
+  display: block;
+  width: calc(100% - 20px);
+  margin: 4px 10px 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.lyr-fit-btn:hover { background: var(--color-surface-2); }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "./lib/ipc";
 import { hasModKey } from "./lib/platform";
+import { initDisplaySettings } from "./lib/appSettings";
 import Database from "@tauri-apps/plugin-sql";
 import { AppHeader } from "./components/AppHeader";
 import { SettingsModal } from "./components/SettingsModal";
@@ -25,6 +26,9 @@ export default function App() {
   const [storageError, setStorageError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const initDone = useRef(false);
+
+  // Text size + wide-screen layout are document-level; apply them first.
+  useEffect(() => { initDisplaySettings(); }, []);
 
   // Cmd+, on macOS / Ctrl+, elsewhere → open settings
   useEffect(() => {

@@ -116,8 +116,8 @@ pub fn get_data_dir(app: AppHandle) -> Result<String, String> {
     base_data_dir(&app).map(|p| p.to_string_lossy().into_owned())
 }
 
-#[tauri::command]
-pub fn get_settings(app: AppHandle) -> Result<AppSettings, String> {
+/// Typed view of settings.json for backend use (known fields only).
+pub fn load_app_settings(app: &AppHandle) -> Result<AppSettings, String> {
     let base = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let path = base.join("settings").join("settings.json");
 
@@ -127,6 +127,31 @@ pub fn get_settings(app: AppHandle) -> Result<AppSettings, String> {
     } else {
         Ok(AppSettings::default())
     }
+}
+
+/// Returns every key in settings.json, over the defaults.
+///
+/// This used to deserialize into `AppSettings` and return that, which
+/// silently dropped every key `set_setting` had written that the struct
+/// doesn't list — `hide_access_disclaimer`, `experience_level`, the export
+/// preferences, the first-run acknowledgement. They were saved to disk but
+/// never came back, so those settings appeared not to work at all.
+#[tauri::command]
+pub fn get_settings(app: AppHandle) -> Result<serde_json::Value, String> {
+    let base = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let path = base.join("settings").join("settings.json");
+
+    let mut doc = serde_json::to_value(AppSettings::default()).map_err(|e| e.to_string())?;
+    if path.exists() {
+        let text = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let file: serde_json::Value = serde_json::from_str(&text).map_err(|e| e.to_string())?;
+        if let (serde_json::Value::Object(d), serde_json::Value::Object(f)) = (&mut doc, file) {
+            for (k, v) in f {
+                d.insert(k, v);
+            }
+        }
+    }
+    Ok(doc)
 }
 
 // ---------------------------------------------------------------------------

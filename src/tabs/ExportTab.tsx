@@ -4,16 +4,31 @@ import { useEffect, useRef, useState } from "react";
 
 import { invoke } from "../lib/ipc";
 import { useExperience } from "../theme/ExperienceContext";
-import { mapAreaBounds } from "../lib/geo";
 import { renderMapImage } from "../lib/renderMapImage";
-import { buildCartographicPdf, buildMultiSheetPdf } from "../lib/exportPdf";
-import { getSheetDimensions, computeSheetGrid } from "../lib/sheetGrid";
-import type { LegendEntry } from "../lib/cartography";
-import type { FormatSettings } from "../types/format";
+import { buildMapPdf } from "../lib/exportPdf";
+import type { RenderedPage } from "../lib/exportPdf";
+import { getSheetDimensions } from "../lib/sheetGrid";
+import { planPages, pagePixelSize, pageSpec, collectRasterLayers, collectLegend } from "../lib/mapJob";
+import type { PageJob, SpecContext } from "../lib/mapJob";
+import { isMac } from "../lib/platform";
 import { effectivePaper, MARGIN_SIZES } from "../types/format";
 import type { NationalLayerConfig } from "../types/layers";
 import type { ProjectMeta } from "../types/project";
+import { normalizeElements } from "../types/elements";
 import "./ExportTab.css";
+
+const REVEAL_LABEL = isMac() ? "Show in Finder" : "Show in folder";
+
+/** Directory part of a path, handling both / and \ separators (Windows). */
+function dirOf(path: string): string {
+  const i = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  return i > 0 ? path.slice(0, i) : "";
+}
+
+function baseName(path: string): string {
+  const i = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  return path.slice(i + 1);
+}
 
 // ---------------------------------------------------------------------------
 // Props
@@ -52,13 +67,6 @@ type ExportStatus =
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const PT_PER_IN   = 72;
-const TITLE_H_PT  = 42;
-const SCALE_H_PT  = 54;
-const DISC_H_PT   = 44;
-const DISC_SCALE_GAP_PT = 10; // must match exportPdf.ts DISC_SCALE_GAP_PT
-const OVERLAP_IN  = 0.5;
 
 const DPI_MIN = 72;
 const DPI_MAX = 600;
@@ -222,88 +230,84 @@ export function ExportTab({ projectId, isActive }: Props) {
     if (!project || !layerCfg || isBusy) return;
 
     abortRef.current = false;
-    setStatus({ kind: "rendering" });
+    setStatus({ kind: "rendering", detail: "Preparing…" });
 
     try {
-      const fmt   = project.format;
-      const area  = project.area;
-      const scale = fmt.scaleCustom ?? fmt.scale;
+      // Re-read the project so settings changed on other tabs since this tab
+      // was opened (scale, area, map elements) are what gets exported.
+      const fresh = await invoke<ProjectMeta>("get_project", { id: projectId });
+      setProject(fresh);
 
-      // ── Collect raster layers ──────────────────────────────────────────────
-      const rasterLayers: Array<{ id: string; tiles: string[]; tileSize?: number; opacity?: number }> = [];
-
-      for (const group of layerCfg.groups) {
-        for (const layer of group.layers) {
-          if (layer.id === project.layers.activeBasemap && layer.sourceType === "xyz" && layer.tiles) {
-            rasterLayers.push({ id: layer.id, tiles: layer.tiles, tileSize: layer.tileSize });
-            break;
-          }
-        }
-      }
-      for (const group of layerCfg.groups) {
-        for (const layer of group.layers) {
-          if (
-            layer.id !== project.layers.activeBasemap &&
-            project.layers.enabledLayers.includes(layer.id) &&
-            layer.sourceType === "xyz" &&
-            layer.renderType === "raster" &&
-            layer.tiles
-          ) {
-            const opacity = project.layers.layerOpacities[layer.id] ?? layer.defaultOpacity;
-            rasterLayers.push({ id: layer.id, tiles: layer.tiles, tileSize: layer.tileSize, opacity });
-          }
-        }
-      }
-
+      const rasterLayers = collectRasterLayers(fresh.layers, layerCfg);
       if (rasterLayers.length === 0) {
         setStatus({ kind: "error", message: "No streamable layers are enabled. Enable at least the basemap and switch to Online mode." });
         return;
       }
 
-      // ── Shared legend entries ──────────────────────────────────────────────
-      const legendEntries: LegendEntry[] = [];
-      for (const group of layerCfg.groups) {
-        for (const layer of group.layers) {
-          if (layer.id === project.layers.activeBasemap) {
-            legendEntries.push({ label: layer.name, color: "#888888" });
-          } else if (project.layers.enabledLayers.includes(layer.id)) {
-            const color = layer.style?.fillColor ?? layer.style?.strokeColor ?? "#666666";
-            legendEntries.push({ label: layer.name, color, dash: layer.renderType === "line" });
-          }
+      const plan = planPages(fresh);
+      const ctx: SpecContext = { project: fresh, plan, legend: collectLegend(fresh.layers, layerCfg) };
+      const folder = outputFolder || null;
+
+      if (plan.isMulti && outputMode === "per-sheet") {
+        // One PDF per sheet — the overview is a whole-set page, so it isn't
+        // emitted in this mode.
+        const sheetJobs = plan.pages.filter((p) => p.kind === "sheet");
+        let lastPath = "";
+        for (let i = 0; i < sheetJobs.length; i++) {
+          const job = sheetJobs[i];
+          const page = await renderPage(job, ctx, `Sheet ${job.cell!.ref} (${i + 1}/${sheetJobs.length})`, i, sheetJobs.length);
+          if (!page) return;
+          setStatus({ kind: "composing" });
+          const pdfBytes = await buildMapPdf([page], fresh.name);
+          if (abortRef.current) return;
+          setStatus({ kind: "saving" });
+          lastPath = await invoke<string>("save_export", {
+            projectId,
+            filename: resolveFilename(pattern, fresh.name, plan.scale, job.cell!.ref),
+            dataBase64: uint8ToBase64(pdfBytes),
+            outputFolder: folder,
+            dpi,
+            pages: 1,
+          });
         }
+        await refreshHistory();
+        const folderPath = dirOf(lastPath) || outputFolder;
+        if (autoOpen && folderPath) invoke("reveal_in_finder", { path: folderPath }).catch(() => {});
+        setStatus({ kind: "done", path: lastPath, folder: folderPath, count: sheetJobs.length });
+        return;
       }
 
-      const subtitle  = [project.state, ...(project.counties ?? [])].filter(Boolean).join(" · ") || "Hunting Map";
-      const paper     = effectivePaper(fmt);
-      const marginIn  = MARGIN_SIZES[fmt.margins] ?? 0.5;
-      const usableW_in = paper.w - marginIn * 2;
-      const usableH_in = paper.h - marginIn * 2;
-      const mapH_in    = usableH_in - (TITLE_H_PT + SCALE_H_PT + DISC_H_PT + DISC_SCALE_GAP_PT) / PT_PER_IN;
-
-      const sheetDims  = getSheetDimensions(fmt);
-      const isMulti    = sheetDims.across > 1 || sheetDims.down > 1;
-      const folder     = outputFolder || null;
-
-      // ── Branch: per-sheet vs single PDF ───────────────────────────────────
-      if (isMulti && outputMode === "per-sheet") {
-        await exportPerSheet({
-          fmt, scale, area, project, subtitle,
-          rasterLayers, legendEntries, folder,
-          usableW_in, mapH_in,
-        });
-      } else if (isMulti) {
-        await exportMultiSheet({
-          fmt, scale, area, project, subtitle,
-          rasterLayers, legendEntries, folder,
-          usableW_in, mapH_in,
-        });
-      } else {
-        await exportSingleSheet({
-          fmt, scale, area, project, subtitle,
-          rasterLayers, legendEntries, folder,
-          usableW_in, mapH_in,
-        });
+      // Single PDF (one sheet, or every sheet + optional overview)
+      const rendered: RenderedPage[] = [];
+      for (let i = 0; i < plan.pages.length; i++) {
+        const job = plan.pages[i];
+        const label = job.kind === "overview"
+          ? "Rendering overview sheet…"
+          : job.kind === "sheet"
+          ? `Rendering sheet ${job.cell!.ref} (${i + 1} of ${plan.pages.length})…`
+          : "Rendering map tiles…";
+        const page = await renderPage(job, ctx, label, i, plan.pages.length);
+        if (!page) return;
+        rendered.push(page);
       }
+
+      setStatus({ kind: "composing" });
+      const pdfBytes = await buildMapPdf(rendered, fresh.name);
+      if (abortRef.current) return;
+
+      setStatus({ kind: "saving" });
+      const path = await invoke<string>("save_export", {
+        projectId,
+        filename: resolveFilename(pattern, fresh.name, plan.scale),
+        dataBase64: uint8ToBase64(pdfBytes),
+        outputFolder: folder,
+        dpi,
+        pages: rendered.length,
+      });
+
+      await refreshHistory();
+      if (autoOpen) invoke("reveal_in_finder", { path }).catch(() => {});
+      setStatus({ kind: "done", path, folder: dirOf(path), count: 1 });
     } catch (err) {
       if (!abortRef.current) {
         setStatus({ kind: "error", message: String(err) });
@@ -311,126 +315,24 @@ export function ExportTab({ projectId, isActive }: Props) {
     }
   }
 
-  // ── Single-sheet ────────────────────────────────────────────────────────────
-  async function exportSingleSheet({ fmt, scale, area, project, subtitle, rasterLayers, legendEntries, folder, usableW_in, mapH_in }: ExportShared) {
-    const pixelW  = Math.round(usableW_in * dpi);
-    const pixelH  = Math.round(mapH_in    * dpi);
-    const bounds  = mapAreaBounds(area.centerLng, area.centerLat, usableW_in, mapH_in, scale);
-
-    setStatus({ kind: "rendering", detail: "Rendering map tiles…", current: 0, total: 1 });
-    const mapJpegUrl = await renderMapImage({ bounds, pixelW, pixelH, rasterLayers });
-    if (abortRef.current) return;
-
-    setStatus({ kind: "composing" });
-    const pdfBytes = await buildCartographicPdf({
-      mapJpegUrl, fmt, scale,
-      projectName: project.name, subtitle,
-      centerLng: area.centerLng,
-      centerLat: area.centerLat,
-      bounds, legendEntries,
+  /** Renders one page's map raster; returns null if the export was cancelled. */
+  async function renderPage(
+    job: PageJob, ctx: SpecContext, detail: string, current: number, total: number,
+  ): Promise<RenderedPage | null> {
+    if (abortRef.current) return null;
+    setStatus({ kind: "rendering", detail, current, total });
+    const { pixelW, pixelH } = pagePixelSize(job, dpi);
+    const base = pagePixelSize(job, 96);
+    // Bigger rasters need more tiles; scale the timeout with pixel area so
+    // high-DPI or overview renders on a slow connection aren't cut off early.
+    const timeoutMs = Math.round(60_000 * Math.max(1, (pixelW * pixelH) / (base.pixelW * base.pixelH)));
+    const jpegUrl = await renderMapImage({
+      bounds: job.bounds, pixelW, pixelH,
+      rasterLayers: collectRasterLayers(ctx.project.layers, layerCfg!),
+      timeoutMs,
     });
-    if (abortRef.current) return;
-
-    setStatus({ kind: "saving" });
-    const filename = resolveFilename(pattern, project.name, scale);
-    const path     = await invoke<string>("save_export", {
-      projectId,
-      filename,
-      dataBase64:    uint8ToBase64(pdfBytes),
-      outputFolder:  folder,
-      dpi,
-      pages:         1,
-    });
-
-    await refreshHistory();
-    if (autoOpen) invoke("reveal_in_finder", { path }).catch(() => {});
-    const folderPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
-    setStatus({ kind: "done", path, folder: folderPath, count: 1 });
-  }
-
-  // ── Multi-sheet (single PDF) ─────────────────────────────────────────────────
-  async function exportMultiSheet({ fmt, scale, area, project, subtitle, rasterLayers, legendEntries, folder }: ExportShared) {
-    const grid = computeSheetGrid(fmt, OVERLAP_IN, area.centerLng, area.centerLat, scale);
-
-    const pdfBytes = await buildMultiSheetPdf({
-      fmt, scale,
-      projectName: project.name, subtitle,
-      centerLng: area.centerLng,
-      centerLat: area.centerLat,
-      legendEntries, rasterLayers,
-      dpi,
-      onProgress: (detail, current, total) => {
-        if (!abortRef.current) setStatus({ kind: "rendering", detail, current, total });
-      },
-    });
-    if (abortRef.current) return;
-
-    setStatus({ kind: "saving" });
-    const filename = resolveFilename(pattern, project.name, scale);
-    const path     = await invoke<string>("save_export", {
-      projectId,
-      filename,
-      dataBase64:   uint8ToBase64(pdfBytes),
-      outputFolder: folder,
-      dpi,
-      pages:        1 + grid.totalSheets, // overview + sheets
-    });
-
-    await refreshHistory();
-    if (autoOpen) invoke("reveal_in_finder", { path }).catch(() => {});
-    const folderPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
-    setStatus({ kind: "done", path, folder: folderPath, count: 1 });
-  }
-
-  // ── Per-sheet (separate PDFs) ────────────────────────────────────────────────
-  async function exportPerSheet({ fmt, scale, area, project, subtitle, rasterLayers, legendEntries, folder }: ExportShared) {
-    const grid   = computeSheetGrid(fmt, OVERLAP_IN, area.centerLng, area.centerLat, scale);
-    const pixelW = Math.round(grid.mapWidthIn  * dpi);
-    const pixelH = Math.round(grid.mapHeightIn * dpi);
-    let lastPath = "";
-
-    for (let i = 0; i < grid.cells.length; i++) {
-      if (abortRef.current) return;
-      const cell   = grid.cells[i];
-      const detail = `Sheet ${cell.ref} (${i + 1}/${grid.totalSheets})`;
-      setStatus({ kind: "rendering", detail, current: i, total: grid.totalSheets });
-
-      const mapJpegUrl = await renderMapImage({
-        bounds: cell.bounds, pixelW, pixelH, rasterLayers,
-      });
-      if (abortRef.current) return;
-
-      setStatus({ kind: "composing" });
-      const cellSubtitle = grid.totalSheets > 1
-        ? `Sheet ${cell.ref} — ${subtitle}`
-        : subtitle;
-      const pdfBytes = await buildCartographicPdf({
-        mapJpegUrl, fmt, scale,
-        projectName: project.name,
-        subtitle:    cellSubtitle,
-        centerLng:   (cell.bounds.east + cell.bounds.west) / 2,
-        centerLat:   (cell.bounds.north + cell.bounds.south) / 2,
-        bounds:      cell.bounds,
-        legendEntries,
-      });
-      if (abortRef.current) return;
-
-      setStatus({ kind: "saving" });
-      const filename = resolveFilename(pattern, project.name, scale, cell.ref);
-      lastPath = await invoke<string>("save_export", {
-        projectId,
-        filename,
-        dataBase64:   uint8ToBase64(pdfBytes),
-        outputFolder: folder,
-        dpi,
-        pages:        1,
-      });
-    }
-
-    await refreshHistory();
-    const folderPath = lastPath.includes("/") ? lastPath.slice(0, lastPath.lastIndexOf("/")) : outputFolder;
-    if (autoOpen && folderPath) invoke("reveal_in_finder", { path: folderPath }).catch(() => {});
-    setStatus({ kind: "done", path: lastPath, folder: folderPath, count: grid.cells.length });
+    if (abortRef.current) return null;
+    return { spec: pageSpec(job, `page-${current}`, ctx), jpegUrl };
   }
 
   async function refreshHistory() {
@@ -462,6 +364,9 @@ export function ExportTab({ projectId, isActive }: Props) {
   const sheetDims    = getSheetDimensions(fmt);
   const isMulti      = sheetDims.across > 1 || sheetDims.down > 1;
   const totalSheets  = sheetDims.across * sheetDims.down;
+  const withOverview = normalizeElements(project.elements).overviewSheet;
+  const overviewNote = withOverview ? " + overview" : "";
+  const pageCount    = totalSheets + (withOverview ? 1 : 0);
 
   // Filename preview
   const previewSheet = outputMode === "per-sheet" && isMulti ? "A1" : undefined;
@@ -649,7 +554,7 @@ export function ExportTab({ projectId, isActive }: Props) {
                 saveSetting("export_auto_open", String(e.target.checked));
               }}
             />
-            Open output folder in Finder after export
+            Open output folder after export
           </label>
         </section>
 
@@ -663,14 +568,14 @@ export function ExportTab({ projectId, isActive }: Props) {
             <InfoRow label="Sheet layout" value={
               totalSheets === 1
                 ? "Single sheet"
-                : `${sheetDims.across} × ${sheetDims.down} (${totalSheets} sheets + overview)`
+                : `${sheetDims.across} × ${sheetDims.down} (${totalSheets} sheets${overviewNote})`
             } />
             <InfoRow label="Output"      value={
               !isMulti
                 ? "1 PDF file"
                 : outputMode === "per-sheet"
                   ? `${totalSheets} PDF files`
-                  : `1 PDF file (${1 + totalSheets} pages)`
+                  : `1 PDF file (${pageCount} pages)`
             } />
           </div>
         </section>
@@ -723,7 +628,7 @@ export function ExportTab({ projectId, isActive }: Props) {
                 ) : (
                   <>
                     <div className="export-done-label">PDF saved</div>
-                    <div className="export-done-path">{status.path.split("/").pop()}</div>
+                    <div className="export-done-path">{baseName(status.path)}</div>
                     <div className="export-done-fullpath">{status.path}</div>
                   </>
                 )}
@@ -732,9 +637,7 @@ export function ExportTab({ projectId, isActive }: Props) {
                 <button
                   className="export-reveal-btn"
                   onClick={() => handleReveal(status.count > 1 ? status.folder : status.path)}
-                >
-                  Show in Finder
-                </button>
+                >{REVEAL_LABEL}</button>
                 <button className="export-again-btn" onClick={reset}>Export again</button>
               </div>
             </div>
@@ -771,9 +674,7 @@ export function ExportTab({ projectId, isActive }: Props) {
                     className="export-history-reveal"
                     onClick={() => handleReveal(entry.path)}
                     title={entry.path}
-                  >
-                    Show in Finder
-                  </button>
+                  >{REVEAL_LABEL}</button>
                 </div>
               ))}
             </div>
@@ -783,23 +684,6 @@ export function ExportTab({ projectId, isActive }: Props) {
       </div>
     </div>
   );
-}
-
-// ---------------------------------------------------------------------------
-// ExportShared — passed between the three export branches
-// ---------------------------------------------------------------------------
-
-interface ExportShared {
-  fmt: FormatSettings;
-  scale: number;
-  area: { centerLng: number; centerLat: number };
-  project: ProjectMeta;
-  subtitle: string;
-  rasterLayers: Array<{ id: string; tiles: string[]; tileSize?: number; opacity?: number }>;
-  legendEntries: LegendEntry[];
-  folder: string | null;
-  usableW_in: number;
-  mapH_in: number;
 }
 
 // ---------------------------------------------------------------------------

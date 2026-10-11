@@ -414,6 +414,13 @@ enum Projects {
         }
     }
 
+    /// Persists which map elements print (Preview tab "Save & Apply").
+    static func saveMapElements(id: String, elements: [String: Any], expectedGeneration: UInt64) throws -> UInt64 {
+        try guardedUpdate(id: id, expectedGeneration: expectedGeneration) { dict in
+            dict["elements"] = elements
+        }
+    }
+
     /// Persists the selected state and county list, bumps lastModified.
     static func saveStateSelection(id: String, state: String?, counties: [String], expectedGeneration: UInt64) throws -> UInt64 {
         try guardedUpdate(id: id, expectedGeneration: expectedGeneration) { dict in

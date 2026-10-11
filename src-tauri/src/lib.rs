@@ -42,6 +42,7 @@ pub fn run() {
             projects::save_format_settings,
             projects::save_layer_settings,
             projects::save_area_settings,
+            projects::save_map_elements,
             projects::save_state_selection,
             projects::save_notes,
             projects::save_export,

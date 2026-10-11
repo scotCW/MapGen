@@ -283,9 +283,26 @@
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 
 .settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 10px 20px 14px;
   border-top: 1px solid var(--border);
 }
+
+.settings-done-btn {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-accent);
+  color: var(--color-accent-text, #fff);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.settings-done-btn:hover { background: var(--color-accent-hover); }
 
 .settings-footer-note {
   font-size: 11px;

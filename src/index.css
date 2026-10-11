@@ -31,3 +31,17 @@ body {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Wide / curved screen layout (Settings → Display) ─────────────────────────
+ * Centres the app in a comfortable-width column on ultrawide monitors so the
+ * header, tabs and side panels aren't pushed out to the far edges. */
+html[data-wide] body {
+  background: var(--color-surface-3);
+}
+html[data-wide] #root {
+  max-width: 2200px;
+  width: 100%;
+  margin-inline: auto;
+  background: var(--color-bg);
+  box-shadow: 0 0 0 1px var(--color-border), 0 0 40px rgba(0, 0, 0, 0.18);
+}

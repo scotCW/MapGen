@@ -57,6 +57,15 @@ export function DataScreen({ onBack, initialStateId }: Props) {
   // to finish first. Tracked separately to say so, instead of leaving a button
   // that looks like it did nothing for as long as that download takes.
   const [cancelRequested, setCancelRequested] = useState(false);
+  // Set the instant "Download Selected" is clicked, before the backend has
+  // answered — on a slow network that first round-trip alone can take a
+  // while, and the button must visibly react regardless.
+  const [starting, setStarting] = useState(false);
+  // Outcome of the last download, kept on screen after it ends. Previously a
+  // failure flipped straight back to the idle footer and the error (only ever
+  // rendered inside the progress view) vanished — it looked like nothing
+  // happened at all.
+  const [lastResult, setLastResult] = useState<{ ok: boolean; message: string } | null>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // View mode + filter
@@ -227,8 +236,15 @@ export function DataScreen({ onBack, initialStateId }: Props) {
         if (!p.active) {
           stopProgressPolling();
           refreshManifest();
+          setLastResult(p.error
+            ? { ok: false, message: p.error }
+            : { ok: true, message: `Downloaded ${p.overallTotal} layer${p.overallTotal === 1 ? "" : "s"}.` });
         }
-      } catch { stopProgressPolling(); }
+      } catch (e) {
+        stopProgressPolling();
+        setProgress(null);
+        setLastResult({ ok: false, message: `Lost track of the download: ${e}` });
+      }
     }, 800);
   }
 
@@ -500,13 +516,17 @@ export function DataScreen({ onBack, initialStateId }: Props) {
       downloadUrl: l.downloadUrl,
     }));
 
+    setStarting(true);
+    setLastResult(null);
     try {
       await invoke("start_download", { stateId: selectedStateId, items });
       setCancelRequested(false);
-      setProgress({ active: true, currentLayerId: "", currentLayerName: "", overallCompleted: 0, overallTotal: items.length });
+      setProgress({ active: true, currentLayerId: "", currentLayerName: items[0].layerName, overallCompleted: 0, overallTotal: items.length, phase: "connecting" });
       startProgressPolling();
     } catch (e) {
-      alert(`Download failed to start: ${e}`);
+      setLastResult({ ok: false, message: `Download failed to start: ${e}` });
+    } finally {
+      setStarting(false);
     }
   }
 
@@ -546,6 +566,18 @@ export function DataScreen({ onBack, initialStateId }: Props) {
     .reduce((sum, l) => sum + l.estimatedSizeMb, 0);
 
   const isDownloading = progress?.active === true;
+
+  // Fraction of the current item, when the server sent a Content-Length.
+  const itemFraction = progress?.currentTotalBytes
+    ? Math.min(1, (progress.currentBytes ?? 0) / progress.currentTotalBytes)
+    : null;
+  // Overall bar: whole items done plus the current item's fraction. Null
+  // (indeterminate animation) while nothing measurable has arrived yet.
+  const overallFraction = progress && progress.overallTotal > 0
+    ? (itemFraction === null && progress.overallCompleted === 0
+        ? null
+        : (progress.overallCompleted + (itemFraction ?? 0)) / progress.overallTotal)
+    : null;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -754,30 +786,43 @@ export function DataScreen({ onBack, initialStateId }: Props) {
                     </span>
                     <button
                       className="data-download-btn"
-                      disabled={selectedLayerIds.size === 0}
+                      disabled={selectedLayerIds.size === 0 || starting}
                       onClick={handleDownload}
+                      aria-busy={starting}
                     >
-                      Download Selected
+                      {starting ? (
+                        <><span className="data-btn-spinner" aria-hidden="true" /> Starting…</>
+                      ) : "Download Selected"}
                     </button>
+                    {lastResult && (
+                      <div
+                        className={`data-download-result ${lastResult.ok ? "data-download-result--ok" : "data-download-result--err"}`}
+                        role={lastResult.ok ? "status" : "alert"}
+                      >
+                        {lastResult.ok ? "✓ " : "⚠ "}{lastResult.message}
+                        <button className="data-result-dismiss" onClick={() => setLastResult(null)} aria-label="Dismiss">×</button>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="data-progress">
                     <div className="data-progress-label">
-                      Downloading: {progress?.currentLayerName || "…"}
+                      <span className="data-btn-spinner" aria-hidden="true" />
+                      {progress?.phase === "connecting"
+                        ? <>Connecting for {progress?.currentLayerName || "data"}… <span className="data-progress-hint">(slow networks can take a minute)</span></>
+                        : <>Downloading: {progress?.currentLayerName || "…"}</>}
                     </div>
                     <div className="data-progress-bar-wrap">
                       <div
-                        className="data-progress-bar"
-                        style={{
-                          width:
-                            progress && progress.overallTotal > 0
-                              ? `${Math.round((progress.overallCompleted / progress.overallTotal) * 100)}%`
-                              : "0%",
-                        }}
+                        className={`data-progress-bar ${overallFraction === null ? "data-progress-bar--indeterminate" : ""}`}
+                        style={{ width: overallFraction === null ? undefined : `${Math.round(overallFraction * 100)}%` }}
                       />
                     </div>
                     <div className="data-progress-text">
-                      {progress?.overallCompleted ?? 0} of {progress?.overallTotal ?? 0} items
+                      Item {Math.min((progress?.overallCompleted ?? 0) + 1, progress?.overallTotal ?? 1)} of {progress?.overallTotal ?? 0}
+                      {(progress?.currentBytes ?? 0) > 0 && (
+                        <> — {formatBytes(progress!.currentBytes!)}{progress?.currentTotalBytes ? ` of ${formatBytes(progress.currentTotalBytes)}` : " received"}</>
+                      )}
                       {progress?.error && (
                         <span className="data-progress-error"> — {progress.error}</span>
                       )}

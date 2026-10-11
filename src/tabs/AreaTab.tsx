@@ -4,12 +4,18 @@ import { invoke } from "../lib/ipc";
 import { captureSaveEpoch, isSaveEpochCurrent, isStaleGenerationError } from "../lib/saveEpoch";
 import {
   effectivePaper,
-  MARGIN_SIZES,
   PAPER_SIZES,
   STANDARD_SCALES,
   getSheetGrid,
   FORMAT_DEFAULTS,
+  SCALE_SNAP_TOLERANCE,
+  snapToStandardScale,
+  normalizeFormatScale,
 } from "../types/format";
+import type { MapElements } from "../types/elements";
+import { ELEMENT_DEFAULTS, normalizeElements } from "../types/elements";
+import { computeSheetGrid, getSheetDimensions, DEFAULT_OVERLAP_IN } from "../lib/sheetGrid";
+import { computePageLayout } from "../lib/pageLayout";
 import type { FormatSettings } from "../types/format";
 import type { AreaSettings } from "../types/area";
 import { DEFAULT_AREA } from "../types/area";
@@ -108,6 +114,20 @@ function backComputeScale(b: Bounds, fmt: FormatSettings): number {
   return Math.round((scaleW + scaleH) / 2);
 }
 
+/**
+ * The scale a box represents, stabilised: within tolerance of the current
+ * scale it *is* the current scale, and within tolerance of a standard one it
+ * snaps to it. Raw back-computation drifts by a fraction of a percent as the
+ * box moves in latitude, which used to save e.g. 1:49,909 for a chosen
+ * 1:50,000.
+ */
+function resolveScale(b: Bounds, fmt: FormatSettings): number {
+  const raw = backComputeScale(b, fmt);
+  const current = fmt.scaleCustom ?? fmt.scale;
+  if (Math.abs(raw - current) / current <= SCALE_SNAP_TOLERANCE) return current;
+  return snapToStandardScale(raw);
+}
+
 function computeAreaKm2(b: Bounds): number {
   const midLat = (b.south + b.north) / 2;
   const widthM  = (b.east - b.west) / degPerMLng(midLat);
@@ -188,16 +208,25 @@ function makeDimmingFC(b: Bounds) {
   };
 }
 
-function makeMarginFC(b: Bounds, fmt: FormatSettings) {
-  const paper = effectivePaper(fmt);
-  const [across, down] = getSheetGrid(fmt);
-  const margin = MARGIN_SIZES[fmt.margins] ?? 0.5;
-  const mwF = margin / (paper.w * across);
-  const mhF = margin / (paper.h * down);
-  const dLng = (b.east - b.west) * mwF;
-  const dLat = (b.north - b.south) * mhF;
-  const iw = b.west + dLng, ie = b.east - dLng;
-  const is_ = b.south + dLat, in_ = b.north - dLat;
+/**
+ * The ground the PDF actually prints for this paper footprint — same
+ * sheet-grid geometry as the exporter.
+ */
+function printedExtent(b: Bounds, fmt: FormatSettings, el: MapElements): Bounds {
+  const lng = (b.west + b.east) / 2;
+  const lat = (b.south + b.north) / 2;
+  return computeSheetGrid(fmt, DEFAULT_OVERLAP_IN, lng, lat, backComputeScale(b, fmt), el).totalBounds;
+}
+
+/**
+ * Shades everything inside the paper footprint that will NOT be printed as
+ * map (margins, title/scale/disclaimer bands), leaving a clear window over
+ * exactly the printed extent.
+ */
+function makeMarginFC(b: Bounds, fmt: FormatSettings, el: MapElements) {
+  const pb = printedExtent(b, fmt, el);
+  const iw = Math.max(b.west, pb.west), ie = Math.min(b.east, pb.east);
+  const is_ = Math.max(b.south, pb.south), in_ = Math.min(b.north, pb.north);
   return {
     type: "FeatureCollection" as const,
     features: [
@@ -224,39 +253,26 @@ function makeMarginFC(b: Bounds, fmt: FormatSettings) {
   };
 }
 
-// Compass rose position, mirroring exportPdf.ts exactly: a 34pt-radius rose
-// centered 8pt in from the top-right corner of the map image on the
-// top-right sheet of the layout (src/lib/exportPdf.ts ROSE_R/ROSE_GAP). Ground
-// distances are derived from the print scale (1 paper inch = `scale` ground
-// inches) so this stays accurate at any scale or sheet layout, then converted
-// to degrees per-axis the same way the rest of this file's overlays do —
-// a geographic "circle" is really an ellipse in raw lng/lat once you're
-// accounting for a true ground radius in both directions.
-function makeCompassFC(b: Bounds, fmt: FormatSettings) {
-  const margin = MARGIN_SIZES[fmt.margins] ?? 0.5;
-  const scale = fmt.scaleCustom ?? fmt.scale;
+// Compass rose footprint, mirroring cartography.ts drawMapPage: same radius
+// rule, inset 8pt from the top-right corner of the top-right sheet's map —
+// i.e. the printed extent's north-east corner. Ground distances come from the
+// print scale so this stays accurate at any scale or layout.
+function makeCompassFC(b: Bounds, fmt: FormatSettings, el: MapElements) {
+  if (!el.compassRose) return { type: "FeatureCollection" as const, features: [] };
+  const scale = backComputeScale(b, fmt);
+  const { across, down } = getSheetDimensions(fmt);
+  const m = computePageLayout(fmt, el, across * down > 1).map;
+  const roseR = Math.max(18, Math.min(34, Math.min(m.w, m.h) * 0.09));
+  const mPerPt  = (scale * 0.0254) / 72;
+  const insetM  = (roseR + 8) * mPerPt;
+  const radiusM = roseR * mPerPt;
 
-  const ROSE_R_PT = 34;
-  const ROSE_GAP_PT = 8;
-  const PT_PER_IN = 72;
-  const IN_TO_M = 0.0254;
-
-  const metersPerIn = scale * IN_TO_M;
-  const marginM  = margin * metersPerIn;
-  const insetM   = marginM + ((ROSE_R_PT + ROSE_GAP_PT) / PT_PER_IN) * metersPerIn;
-  const radiusM  = (ROSE_R_PT / PT_PER_IN) * metersPerIn;
-
-  // Sheets tile flush edge-to-edge, so the top-right sheet's own top-right
-  // corner is simply the overall box's north/east edge — no need to divide
-  // out the sheet grid to find it.
-  const lat = b.north;
-  const insetLng  = insetM  * degPerMLng(lat);
-  const insetLat  = insetM  * DEG_PER_M_LAT;
+  const pb = printedExtent(b, fmt, el);
+  const lat = pb.north;
+  const cx = pb.east  - insetM * degPerMLng(lat);
+  const cy = pb.north - insetM * DEG_PER_M_LAT;
   const radiusLng = radiusM * degPerMLng(lat);
   const radiusLat = radiusM * DEG_PER_M_LAT;
-
-  const cx = b.east  - insetLng;
-  const cy = b.north - insetLat;
 
   const steps = 48;
   const ring: [number, number][] = [];
@@ -447,6 +463,7 @@ export function AreaTab({ projectId, isActive, onBoundsChange, onFormatChangedEx
   // Mutable refs
   const boundsRef  = useRef<Bounds | null>(null);
   const formatRef  = useRef<FormatSettings>(FORMAT_DEFAULTS);
+  const elementsRef = useRef<MapElements>(ELEMENT_DEFAULTS);
 
   // Drag state — box mode
   const dragRef = useRef<{
@@ -476,13 +493,16 @@ export function AreaTab({ projectId, isActive, onBoundsChange, onFormatChangedEx
   // ── 1. Load project format + area + units ─────────────────────────────────
 
   useEffect(() => {
-    invoke<{ format?: FormatSettings; area?: AreaSettings }>(
+    invoke<{ format?: FormatSettings; area?: AreaSettings; elements?: Partial<MapElements> }>(
       "get_project",
       { id: projectId }
     )
       .then((proj) => {
         generationRef.current = (proj as any).settingsGeneration ?? 0;
-        const fmt  = (proj.format as FormatSettings | undefined) ?? FORMAT_DEFAULTS;
+        elementsRef.current = normalizeElements(proj.elements);
+        // Older builds saved drifted scales like 1:49,909 as "custom"; read
+        // them back as the standard scale they were meant to be.
+        const fmt  = normalizeFormatScale((proj.format as FormatSettings | undefined) ?? FORMAT_DEFAULTS);
         const area = (proj.area  as AreaSettings   | undefined) ?? DEFAULT_AREA;
         setFormat(fmt);
         formatRef.current = fmt;
@@ -511,9 +531,10 @@ export function AreaTab({ projectId, isActive, onBoundsChange, onFormatChangedEx
   // changed *elsewhere* while this tab sat idle in the background.
   useEffect(() => {
     if (!isActive || saveTimer.current) return;
-    invoke<{ format?: FormatSettings; settingsGeneration?: number }>("get_project", { id: projectId })
+    invoke<{ format?: FormatSettings; settingsGeneration?: number; elements?: Partial<MapElements> }>("get_project", { id: projectId })
       .then((proj) => {
-        const fmt = proj.format as FormatSettings | undefined;
+        elementsRef.current = normalizeElements(proj.elements);
+        const fmt = proj.format ? normalizeFormatScale(proj.format as FormatSettings) : undefined;
         if (!fmt) return;
         generationRef.current = proj.settingsGeneration ?? generationRef.current;
         setFormat(fmt);
@@ -618,18 +639,17 @@ export function AreaTab({ projectId, isActive, onBoundsChange, onFormatChangedEx
     if (!map) return;
 
     (map.getSource(SRC.dimming)  as maplibregl.GeoJSONSource)?.setData(makeDimmingFC(b));
-    (map.getSource(SRC.margin)   as maplibregl.GeoJSONSource)?.setData(makeMarginFC(b, fmt));
+    (map.getSource(SRC.margin)   as maplibregl.GeoJSONSource)?.setData(makeMarginFC(b, fmt, elementsRef.current));
     (map.getSource(SRC.neatline) as maplibregl.GeoJSONSource)?.setData(makeNeatlineFC(b));
     const { divFC, overlapFC } = makeDivisionsFC(b, fmt);
     (map.getSource(SRC.divs)     as maplibregl.GeoJSONSource)?.setData(divFC);
     (map.getSource(SRC.overlap)  as maplibregl.GeoJSONSource)?.setData(overlapFC);
-    (map.getSource(SRC.compass)  as maplibregl.GeoJSONSource)?.setData(makeCompassFC(b, fmt));
+    (map.getSource(SRC.compass)  as maplibregl.GeoJSONSource)?.setData(makeCompassFC(b, fmt, elementsRef.current));
 
     repositionOverlayElements();
     onBoundsChange?.(b);
 
-    const newScale = backComputeScale(b, fmt);
-    setLiveScale(newScale);
+    setLiveScale(resolveScale(b, fmt));
     setLiveAreaKm(computeAreaKm2(b));
 
     // Sync coord fields when in coords mode (skip focused field)
@@ -871,7 +891,9 @@ export function AreaTab({ projectId, isActive, onBoundsChange, onFormatChangedEx
 
   // ── 7. Save helper ────────────────────────────────────────────────────────
 
-  const scheduleSave = useCallback((b: Bounds, onSaved?: () => void) => {
+  // keepScale: the box was only moved, not resized — the scale is whatever it
+  // already was, no matter what back-computing the moved box says.
+  const scheduleSave = useCallback((b: Bounds, onSaved?: () => void, keepScale = false) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     // This timer deliberately survives unmount so a last-moment reposition still
     // lands; the epoch check is what stops it landing on top of a restore. It
@@ -881,7 +903,9 @@ export function AreaTab({ projectId, isActive, onBoundsChange, onFormatChangedEx
       if (!isSaveEpochCurrent(epoch)) return; // superseded by a restore
       const lng = (b.west + b.east)   / 2;
       const lat = (b.south + b.north) / 2;
-      const newScale = backComputeScale(b, formatRef.current);
+      const newScale = keepScale
+        ? (formatRef.current.scaleCustom ?? formatRef.current.scale)
+        : resolveScale(b, formatRef.current);
       // A resize that lands off every standard preset is a custom scale,
       // full stop — mark it so the Format tab's Scale section actually shows
       // "Custom" selected instead of highlighting nothing. This applies
@@ -915,7 +939,11 @@ export function AreaTab({ projectId, isActive, onBoundsChange, onFormatChangedEx
             expectedGeneration: generation,
           })
         )
-        .then((g) => { generationRef.current = g; onSaved?.(); })
+        .then((g) => {
+          generationRef.current = g;
+          formatRef.current = { ...formatRef.current, scale: newScale, scaleCustom: isStandard ? null : newScale };
+          onSaved?.();
+        })
         .catch(onFailure);
     }, 600);
   }, [projectId]);
@@ -927,7 +955,7 @@ export function AreaTab({ projectId, isActive, onBoundsChange, onFormatChangedEx
   // when it lands on a non-standard scale. `revertBounds` is what the box
   // snaps back to if the user cancels.
   const commitResizedBounds = useCallback((b: Bounds, revertBounds: Bounds) => {
-    const toScale = backComputeScale(b, formatRef.current);
+    const toScale = resolveScale(b, formatRef.current);
     const fromScale = formatRef.current.scaleCustom ?? formatRef.current.scale;
     const scaleChanged = toScale !== fromScale;
     const goingCustom = !STANDARD_SCALES.some((s) => s.value === toScale);
@@ -990,12 +1018,14 @@ export function AreaTab({ projectId, isActive, onBoundsChange, onFormatChangedEx
       const midLat = (sb.south + sb.north) / 2;
 
       if (handle === "body") {
+        // Re-derive the box from its new centre at the current scale rather
+        // than shifting the old degree extents: a degree of longitude covers
+        // different ground at a different latitude, so a shifted box would
+        // silently represent a different scale.
         const origin = map.project([midLng, midLat]);
         const { lng, lat } = map.unproject([origin.x + dx, origin.y + dy]);
-        const dLng = lng - midLng;
-        const dLat = lat - midLat;
-        west  = sb.west  + dLng; east  = sb.east  + dLng;
-        south = sb.south + dLat; north = sb.north + dLat;
+        applyBounds(boundsFromCenter(lng, lat, formatRef.current));
+        return;
       } else {
         const swPx = map.project([sb.west, sb.south]);
         const nePx = map.project([sb.east, sb.north]);
@@ -1013,7 +1043,7 @@ export function AreaTab({ projectId, isActive, onBoundsChange, onFormatChangedEx
       // Only a resize (not a pure body reposition) can change the scale, so
       // only resizes go through the confirm-before-save path.
       if (b) {
-        if (handle === "body") scheduleSave(b);
+        if (handle === "body") scheduleSave(b, undefined, true);
         else commitResizedBounds(b, startBounds);
       }
       dragRef.current = null;

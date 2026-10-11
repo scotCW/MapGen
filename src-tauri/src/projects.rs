@@ -111,6 +111,51 @@ impl Default for AreaSettings {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Map elements (Tab 4) — which cartographic furniture prints on each sheet
+// ---------------------------------------------------------------------------
+
+/// Mirrors src/types/elements.ts. Every field defaults to `true` so projects
+/// saved before this existed (or by an older build) print everything, as
+/// they always did.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct MapElements {
+    pub title_block: bool,
+    pub sheet_reference: bool,
+    pub neatline: bool,
+    pub grid_lines: bool,
+    pub coordinate_labels: bool,
+    pub compass_rose: bool,
+    pub scale_bar: bool,
+    pub ratio_scale: bool,
+    pub legend: bool,
+    pub index_inset: bool,
+    pub edge_match_markers: bool,
+    pub overview_sheet: bool,
+    pub disclaimer: bool,
+}
+
+impl Default for MapElements {
+    fn default() -> Self {
+        Self {
+            title_block: true,
+            sheet_reference: true,
+            neatline: true,
+            grid_lines: true,
+            coordinate_labels: true,
+            compass_rose: true,
+            scale_bar: true,
+            ratio_scale: true,
+            legend: true,
+            index_inset: true,
+            edge_match_markers: true,
+            overview_sheet: true,
+            disclaimer: true,
+        }
+    }
+}
+
 /// Full project definition — stored in project.json.
 /// Human-readable and hand-editable; never use opaque binary formats.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -136,6 +181,8 @@ pub struct ProjectMeta {
     pub layers: LayerSettings,
     #[serde(default)]
     pub area: AreaSettings,
+    #[serde(default)]
+    pub elements: MapElements,
     /// Bumped only when the whole document is rewritten from outside the tabs
     /// (snapshot restore, preset apply). The settings tabs send the generation
     /// they loaded with every save; a mismatch means their value was computed
@@ -376,6 +423,7 @@ pub fn create_project(app: AppHandle, name: String) -> Result<ProjectSummary, St
         format: FormatSettings::default(),
         layers: LayerSettings::default(),
         area: AreaSettings::default(),
+        elements: MapElements::default(),
         settings_generation: 0,
     };
 
@@ -420,6 +468,7 @@ pub fn fork_project(
         format: source.format,
         layers: source.layers,
         area: source.area,
+        elements: source.elements,
         settings_generation: 0,
     };
 
@@ -481,6 +530,19 @@ pub fn save_area_settings(
     expected_generation: u64,
 ) -> Result<u64, String> {
     guarded_update(&app, &id, expected_generation, |meta| meta.area = area)
+}
+
+/// Persists which map elements print (Preview tab "Save & Apply").
+#[tauri::command]
+pub fn save_map_elements(
+    app: AppHandle,
+    id: String,
+    elements: MapElements,
+    expected_generation: u64,
+) -> Result<u64, String> {
+    guarded_update(&app, &id, expected_generation, |meta| {
+        meta.elements = elements
+    })
 }
 
 /// Persists the selected state and county list for a project.
@@ -737,7 +799,7 @@ pub fn save_snapshot(
 
 /// Deletes the oldest snapshots beyond the `snapshotRetention` setting.
 fn prune_snapshots(app: &AppHandle, sdir: &Path) -> Result<(), String> {
-    let keep = crate::storage::get_settings(app.clone())
+    let keep = crate::storage::load_app_settings(app)
         .map(|s| s.snapshot_retention as usize)
         .unwrap_or(20)
         .max(1);
@@ -948,6 +1010,7 @@ pub async fn import_huntmap(app: AppHandle) -> Result<Option<ProjectSummary>, St
         format: bundle.meta.format,
         layers: bundle.meta.layers,
         area: bundle.meta.area,
+        elements: bundle.meta.elements,
         settings_generation: 0,
     };
 

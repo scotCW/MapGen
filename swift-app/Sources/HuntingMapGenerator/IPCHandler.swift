@@ -198,6 +198,18 @@ enum IPCHandler {
             }
             return try Projects.saveAreaSettings(id: id, area: area, expectedGeneration: generation)
 
+        case "save_map_elements":
+            guard let id = args["id"] as? String else {
+                throw IPCError.missingArg("id")
+            }
+            guard let elements = args["elements"] as? [String: Any] else {
+                throw IPCError.missingArg("elements")
+            }
+            guard let generation = (args["expectedGeneration"] as? NSNumber)?.uint64Value else {
+                throw IPCError.missingArg("expectedGeneration")
+            }
+            return try Projects.saveMapElements(id: id, elements: elements, expectedGeneration: generation)
+
         case "save_state_selection":
             guard let id = args["id"] as? String else {
                 throw IPCError.missingArg("id")

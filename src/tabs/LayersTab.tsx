@@ -10,6 +10,11 @@ import type {
   LayerSettings,
 } from "../types/layers";
 import { isLayerAvailable, mergeStateConfig } from "../types/layers";
+import type { ProjectMeta } from "../types/project";
+import type { Bounds } from "../lib/geo";
+import { printedBounds } from "../lib/mapJob";
+import { normalizeFormatScale } from "../types/format";
+import { SETTINGS_CHANGED_EVENT } from "../lib/appSettings";
 import "./LayersTab.css";
 
 // ---------------------------------------------------------------------------
@@ -48,11 +53,12 @@ export function LayersTab({ projectId, isActive, online, projectState, missingCo
   const [enabledLayers, setEnabledLayers] = useState<Set<string>>(new Set());
   const [opacities, setOpacities] = useState<Record<string, number>>({});
 
-  // The project's saved print-area center, once loaded — used to move the
-  // camera there so toggling a layer shows it on the user's actual selected
-  // area rather than on the map's hardcoded initial view (see below).
-  const [projectCenter, setProjectCenter] = useState<{ lng: number; lat: number } | null>(null);
-  const cameraSyncedRef = useRef(false);
+  // The ground the project actually prints (all sheets) — the camera fits to
+  // it and it's outlined, so layers are always shown on the selected area.
+  // Re-read on every activation: the area/format/elements may have changed on
+  // another tab since this one last looked.
+  const [printArea, setPrintArea] = useState<Bounds | null>(null);
+  const fittedKeyRef = useRef<string | null>(null);
 
   // Bumped after raster basemap sources/layers are added (see effect 4a), to
   // retrigger the visibility-sync effect for layers that didn't exist yet the
@@ -80,10 +86,16 @@ export function LayersTab({ projectId, isActive, online, projectState, missingCo
 
   useEffect(() => {
     invoke<Record<string, unknown>>("get_settings")
-      .then((s) => {
-        if (s.hide_access_disclaimer === true) setHideDisclaimer(true);
-      })
+      .then((s) => setHideDisclaimer(s.hide_access_disclaimer === true))
       .catch(console.error);
+    // Settings → Safety Warnings applies immediately, not only after the
+    // project is reopened (this tab used to read the setting once on mount).
+    function onChanged(e: Event) {
+      const { key, value } = (e as CustomEvent<{ key: string; value: unknown }>).detail ?? {};
+      if (key === "hide_access_disclaimer") setHideDisclaimer(value === true);
+    }
+    window.addEventListener(SETTINGS_CHANGED_EVENT, onChanged);
+    return () => window.removeEventListener(SETTINGS_CHANGED_EVENT, onChanged);
   }, []);
 
   // ------------------------------------------------------------------
@@ -145,8 +157,6 @@ export function LayersTab({ projectId, isActive, online, projectState, missingCo
         // Must be captured before the early return below: leaving it at 0 while
         // the file is on a later generation would get every save refused.
         generationRef.current = (proj as any).settingsGeneration ?? 0;
-        const area = (proj as any).area as { centerLng: number; centerLat: number } | undefined;
-        if (area) setProjectCenter({ lng: area.centerLng, lat: area.centerLat });
         const ls = (proj as any).layers as LayerSettings | undefined;
         if (!ls) return;
         if (ls.activeBasemap) setActiveBasemap(ls.activeBasemap);
@@ -276,41 +286,72 @@ export function LayersTab({ projectId, isActive, online, projectState, missingCo
     }
   }, [isActive]);
 
+  // Re-read the print area on every activation.
+  useEffect(() => {
+    if (!isActive) return;
+    invoke<ProjectMeta>("get_project", { id: projectId })
+      .then((proj) => {
+        if (!proj.area || !proj.format) return;
+        setPrintArea(printedBounds({ ...proj, format: normalizeFormatScale(proj.format) }));
+      })
+      .catch(console.error);
+  }, [isActive, projectId]);
+
   // ------------------------------------------------------------------
-  // 4b. Move the camera to the project's saved area, once
+  // 4b. Fit the camera to the print area and outline it
   // ------------------------------------------------------------------
 
-  // Exactly-once guard, same reasoning as AreaTab's cameraSyncedRef: this only
-  // needs to fire on the transition from the map's placeholder center to the
-  // real loaded one, not every time projectCenter's object identity happens
-  // to change on a re-render.
-  //
-  // Deliberately waits on `config` too, not just `mapReady`/`projectCenter`:
-  // this is also where the "tiles never render" bug (see effect 4a's comment)
-  // gets its actual fix. Sources/layers added while the camera sits still
-  // don't trigger a tile-load pass on their own — confirmed by testing, a
-  // fully "visible" raster layer with a real tile source issued zero tile
-  // requests until the camera moved again. Earlier attempts at fixing that
-  // *inside* effect 4a (resize/triggerRepaint, then a same-value jumpTo, then
-  // a nudge) all failed for the same reason: this effect used to run
-  // independently and would land on the project's *exact* saved coordinates
-  // afterward with no nudge, silently overwriting whatever 4a had done.
-  // Gating on `config` here means this is always the last camera move once
-  // both are ready, so its nudge is the one that sticks.
+  // Waits on `config` too: raster sources added while the camera sits still
+  // don't request tiles until the camera moves, so this must be the last
+  // camera move after effect 4a has added them (see 4a's comment).
   useEffect(() => {
-    if (!mapReady || !config || !projectCenter || cameraSyncedRef.current) return;
-    cameraSyncedRef.current = true;
-    // A sub-meter nudge (0.00001°) forces MapLibre to recompute tile coverage
-    // for sources that didn't exist the last time the transform changed —
-    // jumpTo no-ops when center/zoom exactly match the current transform, so
-    // landing precisely on projectCenter left the newly-added basemap source
-    // permanently unrequested. The offset is imperceptible at any zoom used
-    // here (real zoom used is 12, i.e. ~30m/px).
-    mapRef.current?.jumpTo({
-      center: [projectCenter.lng + 0.00001, projectCenter.lat],
-      zoom: 12,
-    });
-  }, [mapReady, config, projectCenter]);
+    const map = mapRef.current;
+    if (!map || !mapReady || !config || !printArea) return;
+
+    const SRC = "print-area";
+    const fc: GeoJSON.FeatureCollection = {
+      type: "FeatureCollection",
+      features: [{
+        type: "Feature", properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [printArea.west, printArea.south], [printArea.east, printArea.south],
+            [printArea.east, printArea.north], [printArea.west, printArea.north],
+            [printArea.west, printArea.south],
+          ],
+        },
+      }],
+    };
+    const src = map.getSource(SRC) as maplibregl.GeoJSONSource | undefined;
+    if (src) {
+      src.setData(fc);
+    } else {
+      map.addSource(SRC, { type: "geojson", data: fc });
+      map.addLayer({ id: "print-area-halo", type: "line", source: SRC,
+        paint: { "line-color": "#ffffff", "line-width": 5, "line-opacity": 0.8 } });
+      map.addLayer({ id: "print-area-line", type: "line", source: SRC,
+        paint: { "line-color": "#d84315", "line-width": 2.5 } });
+    }
+    // Keep the outline above raster layers added later.
+    for (const id of ["print-area-halo", "print-area-line"]) {
+      if (map.getLayer(id)) map.moveLayer(id);
+    }
+
+    // Refit only when the area itself changed, so panning around while
+    // toggling layers isn't undone on every visit.
+    const key = [printArea.west, printArea.south, printArea.east, printArea.north].map((v) => v.toFixed(6)).join(",");
+    if (fittedKeyRef.current !== key) {
+      fittedKeyRef.current = key;
+      requestAnimationFrame(() => {
+        map.resize();
+        map.fitBounds(
+          [[printArea.west, printArea.south], [printArea.east, printArea.north]],
+          { padding: 60, duration: 0 },
+        );
+      });
+    }
+  }, [mapReady, config, printArea, basemapSourcesVersion]);
 
   // ------------------------------------------------------------------
   // 5. Sync map when layer state changes
@@ -470,6 +511,18 @@ export function LayersTab({ projectId, isActive, online, projectState, missingCo
                   Access categories are estimates — verify before you hunt.
                 </span>
               </div>
+            )}
+
+            {printArea && (
+              <button
+                className="lyr-fit-btn"
+                onClick={() => mapRef.current?.fitBounds(
+                  [[printArea.west, printArea.south], [printArea.east, printArea.north]],
+                  { padding: 60 },
+                )}
+              >
+                Zoom to print area
+              </button>
             )}
           </div>
         )}

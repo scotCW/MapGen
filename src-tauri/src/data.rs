@@ -16,6 +16,16 @@ pub struct DownloadProgressState {
     pub overall_completed: usize,
     pub overall_total: usize,
     pub error: Option<String>,
+    /// Bytes received so far for the current item.
+    #[serde(default)]
+    pub current_bytes: u64,
+    /// Content-Length of the current item, when the server sends one.
+    #[serde(default)]
+    pub current_total_bytes: Option<u64>,
+    /// "connecting" | "downloading" | "" — lets the UI say something useful
+    /// while a slow server hasn't sent the first byte yet.
+    #[serde(default)]
+    pub phase: String,
 }
 
 pub struct DownloadState {
@@ -191,9 +201,12 @@ pub async fn start_download(
                 p.current_layer_id = item.layer_id.clone();
                 p.current_layer_name = item.layer_name.clone();
                 p.overall_completed = i;
+                p.current_bytes = 0;
+                p.current_total_bytes = None;
+                p.phase = "connecting".into();
             }
 
-            match download_one(&app, &state_id, &item).await {
+            match download_one(&app, &state_id, &item, &ds_arc).await {
                 Ok(size_bytes) => {
                     // Update manifest
                     let Ok(dir) = state_data_dir(&app, &state_id) else {
@@ -214,7 +227,12 @@ pub async fn start_download(
                 Err(e) => {
                     let mut p = ds_arc.progress.lock().unwrap();
                     p.active = false;
-                    p.error = Some(format!("{}: {}", item.layer_name, e));
+                    p.phase = String::new();
+                    p.error = Some(if e == "cancelled" {
+                        "Download cancelled".into()
+                    } else {
+                        format!("{}: {}", item.layer_name, e)
+                    });
                     return;
                 }
             }
@@ -226,35 +244,84 @@ pub async fn start_download(
         p.overall_completed = total;
         p.current_layer_id = String::new();
         p.current_layer_name = String::new();
+        p.phase = String::new();
     });
 
     Ok(())
 }
 
 /// Downloads a single layer to disk; returns the byte count written.
-async fn download_one(app: &AppHandle, state_id: &str, item: &DownloadItem) -> Result<u64, String> {
+///
+/// Streams to a temporary file and reports bytes as they arrive. There is no
+/// overall time limit — a large layer on a slow connection can legitimately
+/// take many minutes — only a connect timeout and a stall timeout (no data
+/// for 90s), which is what actually indicates a dead connection.
+async fn download_one(
+    app: &AppHandle,
+    state_id: &str,
+    item: &DownloadItem,
+    ds: &Arc<DownloadState>,
+) -> Result<u64, String> {
+    use std::io::Write;
+
     let dir = state_data_dir(app, state_id)?;
     let dest = dir.join(format!("{}.geojson", item.layer_id));
+    let tmp = dir.join(format!("{}.geojson.part", item.layer_id));
 
     let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(120))
+        .connect_timeout(std::time::Duration::from_secs(30))
+        .read_timeout(std::time::Duration::from_secs(90))
         .build()
         .map_err(|e| e.to_string())?;
 
-    let response = client
+    let mut response = client
         .get(&item.download_url)
         .send()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(describe_net_error)?;
 
     if !response.status().is_success() {
         return Err(format!("HTTP {}", response.status()));
     }
 
-    let bytes = response.bytes().await.map_err(|e| e.to_string())?;
-    let size = bytes.len() as u64;
-    std::fs::write(&dest, &bytes).map_err(|e| e.to_string())?;
+    if let Ok(mut p) = ds.progress.lock() {
+        p.phase = "downloading".into();
+        p.current_total_bytes = response.content_length();
+    }
+
+    let mut file = std::fs::File::create(&tmp).map_err(|e| e.to_string())?;
+    let mut size: u64 = 0;
+    loop {
+        if ds.cancel.lock().map(|c| *c).unwrap_or(false) {
+            drop(file);
+            let _ = std::fs::remove_file(&tmp);
+            return Err("cancelled".into());
+        }
+        match response.chunk().await.map_err(describe_net_error)? {
+            Some(chunk) => {
+                file.write_all(&chunk).map_err(|e| e.to_string())?;
+                size += chunk.len() as u64;
+                if let Ok(mut p) = ds.progress.lock() {
+                    p.current_bytes = size;
+                }
+            }
+            None => break,
+        }
+    }
+    file.flush().map_err(|e| e.to_string())?;
+    drop(file);
+    std::fs::rename(&tmp, &dest).map_err(|e| e.to_string())?;
     Ok(size)
+}
+
+fn describe_net_error(e: reqwest::Error) -> String {
+    if e.is_timeout() {
+        "timed out — the connection stalled. Check your network and try again.".into()
+    } else if e.is_connect() {
+        format!("could not connect ({e}). Check your network and try again.")
+    } else {
+        e.to_string()
+    }
 }
 
 /// Returns current download progress (safe to poll every second from the UI).

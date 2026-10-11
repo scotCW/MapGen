@@ -12,6 +12,7 @@ import {
   sheetCoverageMiles,
   milesToKm,
   describeLayout,
+  normalizeFormatScale,
 } from "../types/format";
 import "./FormatTab.css";
 
@@ -51,7 +52,12 @@ export function FormatTab({ projectId, units }: Props) {
   // Load from project.json on mount
   useEffect(() => {
     invoke<ProjectMeta>("get_project", { id: projectId }).then((p) => {
-      setFmt(p.format ?? FORMAT_DEFAULTS);
+      const loadedFmt = p.format ?? FORMAT_DEFAULTS;
+      const fixed = normalizeFormatScale(loadedFmt);
+      // A drifted custom scale (e.g. 1:49,909 saved by an older build for a
+      // chosen 1:50,000) is repaired and written back once.
+      if (fixed !== loadedFmt) dirtyRef.current = true;
+      setFmt(fixed);
       generationRef.current = p.settingsGeneration ?? 0;
       setLoaded(true);
     });

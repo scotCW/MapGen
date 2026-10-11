@@ -16,6 +16,12 @@ export interface DownloadProgressState {
   overallCompleted: number;
   overallTotal: number;
   error?: string | null;
+  /** Bytes received for the current item (newer backends only). */
+  currentBytes?: number;
+  /** Content-Length of the current item, if the server sent one. */
+  currentTotalBytes?: number | null;
+  /** "connecting" | "downloading" | "" */
+  phase?: string;
 }
 
 export interface DataDiskUsage {

@@ -1,6 +1,7 @@
 import type { FormatSettings } from "./format";
 import type { LayerSettings } from "./layers";
 import type { AreaSettings } from "./area";
+import type { MapElements } from "./elements";
 
 export interface ForkedFrom {
   id: string;
@@ -28,6 +29,9 @@ export interface ProjectMeta {
   format: FormatSettings;
   layers: LayerSettings;
   area: AreaSettings;
+  /// Which map elements print on each sheet (older projects omit it — run it
+  /// through normalizeElements before use).
+  elements?: Partial<MapElements>;
   /// Bumped by the backend whenever the document is rewritten wholesale
   /// (snapshot restore, preset apply). Tabs send the value they loaded with
   /// every save; the backend refuses writes carrying a stale one.

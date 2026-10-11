@@ -73,6 +73,8 @@ async function handle(cmd: string, args: Record<string, unknown> = {}): Promise<
     case "save_area_settings":
     case "save_state_selection":
     case "save_notes":
+    case "save_map_elements":
+      if (args.elements) project.elements = { ...(args.elements as object) };
       if (args.format) Object.assign(project.format, args.format);
       if (args.layers) Object.assign(project.layers, args.layers);
       if (args.area) Object.assign(project.area, args.area);
