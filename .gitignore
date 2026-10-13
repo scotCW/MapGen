@@ -79,3 +79,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 swift-app/.build/
+
+# Linux packages built by scripts/build-linux-docker.sh
+dist-linux/

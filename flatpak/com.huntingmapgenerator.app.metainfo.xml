@@ -6,7 +6,10 @@
   <summary>Print-ready topographic hunting maps</summary>
 
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>LicenseRef-proprietary</project_license>
+  <project_license>Unlicense</project_license>
+
+  <url type="homepage">https://github.com/scotCW/MapGen</url>
+  <url type="bugtracker">https://github.com/scotCW/MapGen/issues</url>
 
   <description>
     <p>
@@ -46,9 +49,9 @@
   <content_rating type="oars-1.1" />
 
   <releases>
-    <release version="0.1.0" date="2026-08-15">
+    <release version="0.0.5" date="2026-10-12" type="development">
       <description>
-        <p>Initial release.</p>
+        <p>First Linux release. Downloaded county data is now drawn on the map, in the preview and in exported PDFs.</p>
       </description>
     </release>
   </releases>

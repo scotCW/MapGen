@@ -2,9 +2,14 @@
 #
 # Builds the Linux packages for Hunting Map Generator (x86_64).
 #
-#   ./scripts/build-linux.sh              # .deb + AppImage
+#   ./scripts/build-linux.sh              # .deb + .rpm
 #   ./scripts/build-linux.sh --flatpak    # the above, then a Flatpak
+#   ./scripts/build-linux.sh --appimage   # also an AppImage
 #   ./scripts/build-linux.sh --deps       # install build prerequisites first
+#   ./scripts/build-linux.sh --system     # Flatpak runtime/app system-wide
+#                                         # (for root in a container)
+#
+# From macOS, ./scripts/build-linux-docker.sh runs this in a container.
 #
 # Must run on Linux. Tauri links against the system GTK/WebKitGTK libraries, so
 # there is no supported way to cross-compile this from macOS or Windows — build
@@ -19,10 +24,14 @@ cd "$(dirname "$0")/.."
 
 WANT_FLATPAK=0
 WANT_DEPS=0
+WANT_APPIMAGE=0
+FLATPAK_SCOPE=--user
 for arg in "$@"; do
   case "$arg" in
     --flatpak) WANT_FLATPAK=1 ;;
     --deps)    WANT_DEPS=1 ;;
+    --appimage) WANT_APPIMAGE=1 ;;
+    --system)  FLATPAK_SCOPE=--system ;;
     -h|--help) awk 'NR>1 && /^#/ {sub(/^# ?/,""); print; next} NR>1 {exit}' "$0"; exit 0 ;;
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
@@ -60,10 +69,11 @@ if [[ "$WANT_DEPS" == "1" ]]; then
     curl wget file \
     libssl-dev \
     libxdo-dev \
-    patchelf
+    patchelf \
+    rpm
   if [[ "$WANT_FLATPAK" == "1" ]]; then
     sudo apt-get install -y flatpak flatpak-builder
-    flatpak remote-add --if-not-exists --user \
+    flatpak remote-add --if-not-exists "$FLATPAK_SCOPE" \
       flathub https://flathub.org/repo/flathub.flatpakrepo
   fi
 fi
@@ -72,16 +82,23 @@ command -v cargo >/dev/null || { echo "error: cargo not found — install Rust f
 
 echo "==> Building frontend + Tauri bundles"
 # `tauri build` runs the frontend build itself via beforeBuildCommand.
+BUNDLES=deb,rpm
+if [[ "$WANT_APPIMAGE" == "1" ]]; then
+  BUNDLES="$BUNDLES,appimage"
+  # linuxdeploy is itself an AppImage; this lets it run without FUSE
+  # (containers, CI).
+  export APPIMAGE_EXTRACT_AND_RUN=1
+fi
 if command -v yarn >/dev/null; then
-  yarn tauri build --bundles deb,appimage
+  yarn tauri build --bundles "$BUNDLES"
 else
-  npx tauri build --bundles deb,appimage
+  npx tauri build --bundles "$BUNDLES"
 fi
 
 BUNDLE_DIR="src-tauri/target/release/bundle"
 echo
 echo "==> Built:"
-find "$BUNDLE_DIR" -maxdepth 2 -type f \( -name '*.deb' -o -name '*.AppImage' \) \
+find "$BUNDLE_DIR" -maxdepth 2 -type f \( -name '*.deb' -o -name '*.rpm' -o -name '*.AppImage' \) \
   -exec ls -lh {} \; | awk '{printf "    %-8s %s\n", $5, $NF}'
 
 if [[ "$WANT_FLATPAK" == "1" ]]; then
@@ -90,11 +107,11 @@ if [[ "$WANT_FLATPAK" == "1" ]]; then
 
   echo
   echo "==> Installing Flatpak runtime"
-  flatpak install --user --noninteractive --or-update \
+  flatpak install "$FLATPAK_SCOPE" --noninteractive --or-update \
     flathub org.gnome.Platform//47 org.gnome.Sdk//47
 
   echo "==> Building Flatpak"
-  flatpak-builder --user --install --force-clean \
+  flatpak-builder "$FLATPAK_SCOPE" --install --force-clean \
     build-flatpak flatpak/com.huntingmapgenerator.app.yml
 
   echo "==> Exporting single-file bundle"
@@ -107,7 +124,7 @@ if [[ "$WANT_FLATPAK" == "1" ]]; then
   rm -rf .flatpak-repo
 
   echo
-  echo "    Installed locally. Run with:"
+  echo "    Installed ($FLATPAK_SCOPE). Run with:"
   echo "      flatpak run com.huntingmapgenerator.app"
   echo "    Portable bundle: $BUNDLE_DIR/hunting-map-generator.flatpak"
   echo "    Install elsewhere with:"
