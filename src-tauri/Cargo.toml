@@ -32,6 +32,10 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 # Only `tokio::sync::oneshot` is used directly (the file-dialog commands); the
 # runtime itself comes from Tauri, and reqwest pulls the features it needs.
 tokio = { version = "1", features = ["sync"] }
+# Already in the tree via tauri-plugin-sql; used directly only to repair the
+# migration checksum before the plugin opens the catalog (src/migrations.rs).
+sqlx = { version = "0.8", default-features = false, features = ["sqlite", "runtime-tokio"] }
+sha2 = "0.10"
 
 [features]
 # This feature is used for production builds or when `devPath` points to the filesystem.

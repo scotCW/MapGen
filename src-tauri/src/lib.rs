@@ -1,4 +1,5 @@
 mod data;
+mod migrations;
 mod presets;
 mod projects;
 mod storage;
@@ -10,7 +11,9 @@ pub fn run() {
     let migrations = vec![Migration {
         version: 1,
         description: "initial_schema",
-        sql: include_str!("../migrations/001_initial.sql"),
+        // LF-normalised so the checksum sqlx stores doesn't depend on how git
+        // checked the file out (see migrations.rs).
+        sql: migrations::initial_sql(),
         kind: MigrationKind::Up,
     }];
 
@@ -27,6 +30,8 @@ pub fn run() {
         .setup(|app| {
             storage::init_directories(app.handle())
                 .map_err(|e| format!("Storage init failed: {e}"))?;
+            // Before the frontend opens catalog.db (which runs migrations).
+            migrations::repair_catalog(app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

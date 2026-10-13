@@ -1,0 +1,7 @@
+# Embedded with include_str! and checksummed by sqlx — must be byte-identical
+# on every platform, so never convert to CRLF on Windows checkouts.
+*.sql text eol=lf
+
+# Windows PowerShell 5.1 needs the UTF-8 BOM this file carries; keep git from
+# touching its bytes.
+scripts/build-windows.ps1 -text

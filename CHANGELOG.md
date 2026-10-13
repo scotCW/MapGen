@@ -9,6 +9,13 @@ Prerelease — **Windows and macOS** (see the `windows` and `macos` tags). Fixes
 ### Fixed
 - **"Download Selected" always failed** with `missing field layer_id`. Tauri only converts top-level command argument names; the nested `DownloadItem` fields arrived as `layerId`/`layerName`/`downloadUrl` and didn't deserialize. `DownloadItem` now renames its fields to camelCase. Before 0.0.2 the failure was silent ("nothing happens"); 0.0.2–0.0.3 showed the error but still couldn't download. Affects every earlier release on both platforms.
 - macOS capability schema (`src-tauri/gen/schemas/macOS-schema.json`) regenerated for Tauri 2.11.6 — generated output, no behaviour change.
+- **Every county-data download URL was broken** (HTTP 400/403/404 — placeholder `opendata.arcgis.com` and `wgfd.wyo.gov` paths that never existed), so even with the fix above nothing could download. Repointed to the agencies' live ArcGIS feature services: CPW `CPWAdminData` (managed public-access properties, Walk-In Access, big-game GMUs), the Colorado State Land Board's surface ownership, WGFD Hunter Management Areas / Walk-In Hunting / Public Access Areas / Elk Hunt Areas, and OSLI state surface ownership. Verified against the live services: every layer downloads completely (feature totals match each service's record count).
+- Downloads page through ArcGIS query results (1,000 features per request) instead of one request — four layers exceed the services' 2,000-record limit (WY state trust land is 19,319 parcels) — and treat ArcGIS's HTTP-200 error responses as errors. A layer can list `additionalDownloadUrls` to merge several sources into one file (OSLI splits state surface land across two services).
+- Wyoming "Game Management Districts" is now **Elk Hunt Areas** — WGFD publishes per-species hunt areas, not a single district layer. **Checkerboard Ownership** is no longer offered for download: no public statewide dataset exists.
+- **"Storage error: migration 1 was previously applied but has been modified"** on Windows builds 0.0.2–0.0.4. sqlx checksums the migration's exact text, and the Windows checkout embedded it with CRLF line endings, so it no longer matched catalogs created by LF builds. The migration is now always handed to sqlx with LF endings, a startup repair rewrites a CRLF-era checksum in place (data untouched), and `.gitattributes` pins `*.sql` to LF.
+
+### Known limitation
+- Downloaded layers are saved to disk but **not yet drawn on the map** — nothing reads them back, and the access rules expect PAD-US field names these agency datasets don't use. Wiring the offline overlays is planned work.
 
 ## [0.0.3] - 2026-10-11
 

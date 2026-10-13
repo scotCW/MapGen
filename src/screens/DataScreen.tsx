@@ -138,6 +138,7 @@ export function DataScreen({ onBack, initialStateId }: Props) {
                 name: l.name,
                 groupLabel: g.label,
                 downloadUrl: l.downloadUrl,
+                additionalDownloadUrls: l.additionalDownloadUrls,
                 estimatedSizeMb: estimateSizeMb(l),
               });
             }
@@ -153,6 +154,7 @@ export function DataScreen({ onBack, initialStateId }: Props) {
                   name: l.name,
                   groupLabel: g.label,
                   downloadUrl: l.downloadUrl,
+                  additionalDownloadUrls: l.additionalDownloadUrls,
                   estimatedSizeMb: estimateSizeMb(l),
                 });
               }
@@ -514,6 +516,7 @@ export function DataScreen({ onBack, initialStateId }: Props) {
       layerId: l.id,
       layerName: l.name,
       downloadUrl: l.downloadUrl,
+      additionalDownloadUrls: l.additionalDownloadUrls,
     }));
 
     setStarting(true);
@@ -899,7 +902,7 @@ export function DataScreen({ onBack, initialStateId }: Props) {
                           if (!layer) return;
                           invoke("start_download", {
                             stateId: selectedStateId,
-                            items: [{ layerId: layer.id, layerName: layer.name, downloadUrl: layer.downloadUrl }],
+                            items: [{ layerId: layer.id, layerName: layer.name, downloadUrl: layer.downloadUrl, additionalDownloadUrls: layer.additionalDownloadUrls }],
                           }).then(() => startProgressPolling()).catch(console.error);
                           setShowManage(false);
                         }}

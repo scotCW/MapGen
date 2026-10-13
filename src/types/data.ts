@@ -33,6 +33,7 @@ export interface DownloadItem {
   layerId: string;
   layerName: string;
   downloadUrl: string;
+  additionalDownloadUrls?: string[];
 }
 
 // Derived from state config — layers the user can download.
@@ -41,6 +42,7 @@ export interface DownloadableLayerInfo {
   name: string;
   groupLabel: string;
   downloadUrl: string;
+  additionalDownloadUrls?: string[];
   estimatedSizeMb: number;
 }
 

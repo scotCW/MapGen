@@ -31,6 +31,8 @@ export interface LayerConfig {
   onlineOnly: boolean;
   downloadable: boolean;
   downloadUrl?: string;
+  /** Further sources merged into the same file (e.g. a dataset split across services). */
+  additionalDownloadUrls?: string[];
   requiresDownload?: boolean;
   // Land access specific
   accessCategory?: number; // 0 = access routes, 1-5 = categories
