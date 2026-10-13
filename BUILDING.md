@@ -112,7 +112,9 @@ Output lands in `src-tauri/target/release/bundle/`:
 
 The manifest (`flatpak/com.huntingmapgenerator.app.yml`) repackages the `.deb` rather than compiling from source, which is the approach Tauri documents. It grants only what the app needs: `--device=dri` (MapLibre renders via WebGL), `--share=network` (map tiles and county data downloads), and read/write access to Documents and Downloads so a chosen PDF export folder keeps working across sessions.
 
-The runtime is pinned to `org.gnome.Platform//47`, which supplies `webkit2gtk-4.1`. Tauri v2 does not use the GTK 4 WebKit build, so if a future runtime drops the GTK 3 one, pin backwards rather than migrating.
+The runtime is pinned to `org.gnome.Platform//51`, which supplies `webkit2gtk-4.1`. Tauri v2 does not use the GTK 4 WebKit build, so if a future runtime drops the GTK 3 one, pin to the newest *supported* runtime that still has it rather than migrating. GNOME runtimes are supported for about a year (47 reached end-of-life in October 2025), so check the pin each release.
+
+The Docker build uses `build-linux.sh --flatpak-direct`, which assembles the same Flatpak with `flatpak build-init`/`build-finish`/`build-export` instead of `flatpak-builder`. `flatpak-builder` runs every build step inside bubblewrap, whose seccomp filter can't be installed under x86_64 emulation on Apple Silicon (`prctl(PR_SET_SECCOMP): Invalid argument`). Repackaging the `.deb` doesn't need a sandbox. The finish-args (permissions) are read from the manifest, so they're defined in one place; keep the file-copy steps in the script in sync with the manifest's `build-commands`.
 
 `flatpak/com.huntingmapgenerator.app.metainfo.xml` carries the AppStream metadata that software centres and Flathub require.
 

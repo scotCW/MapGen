@@ -14,7 +14,7 @@
 # it rather than migrating — Tauri v2 does not use the GTK 4 WebKit build.
 app-id: com.huntingmapgenerator.app
 runtime: org.gnome.Platform
-runtime-version: '47'
+runtime-version: '51'
 sdk: org.gnome.Sdk
 command: hunting-map-generator
 

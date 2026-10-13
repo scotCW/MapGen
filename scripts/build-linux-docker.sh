@@ -31,7 +31,7 @@ git archive --format=tar HEAD | docker run --rm -i --privileged --platform linux
     set -euo pipefail
     mkdir -p /build && cd /build && tar -x
     yarn install --frozen-lockfile
-    ./scripts/build-linux.sh --appimage --flatpak --system
+    ./scripts/build-linux.sh --appimage --flatpak-direct --system
     # build-linux.sh empties the bundle dir first, so only this build is here.
     b=src-tauri/target/release/bundle
     cp "$b"/deb/*.deb "$b"/rpm/*.rpm "$b"/appimage/*.AppImage "$b"/*.flatpak /out/
