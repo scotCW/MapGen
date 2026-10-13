@@ -10,6 +10,9 @@ import type { RenderedPage } from "../lib/exportPdf";
 import { getSheetDimensions } from "../lib/sheetGrid";
 import { planPages, pagePixelSize, pageSpec, collectRasterLayers, collectLegend } from "../lib/mapJob";
 import type { PageJob, SpecContext } from "../lib/mapJob";
+import { collectVectorLayers, loadLayerConfig } from "../lib/layerData";
+import type { VectorLayer } from "../lib/layerData";
+import type { RasterLayer } from "../lib/renderMapImage";
 import { isMac } from "../lib/platform";
 import { effectivePaper, MARGIN_SIZES } from "../types/format";
 import type { NationalLayerConfig } from "../types/layers";
@@ -146,6 +149,12 @@ function formatPaperLabel(project: ProjectMeta): string {
 // ExportTab
 // ---------------------------------------------------------------------------
 
+/** What each page's map raster draws, resolved once per export. */
+interface PageLayers {
+  rasterLayers: RasterLayer[];
+  vectorLayers: VectorLayer[];
+}
+
 export function ExportTab({ projectId, isActive }: Props) {
   const { atLeast } = useExperience();
   const [project,      setProject]     = useState<ProjectMeta | null>(null);
@@ -167,7 +176,10 @@ export function ExportTab({ projectId, isActive }: Props) {
     if (!isActive) return;
 
     invoke<ProjectMeta>("get_project", { id: projectId })
-      .then(setProject)
+      .then((p) => {
+        setProject(p);
+        return loadLayerConfig(p.state).then(setLayerCfg);
+      })
       .catch(console.error);
 
     invoke<Record<string, string>>("get_settings")
@@ -179,11 +191,6 @@ export function ExportTab({ projectId, isActive }: Props) {
         setPattern(s["export_filename_pattern"] ?? "{project}_{date}_1-{scale}");
         setAutoOpen(s["export_auto_open"] === "true");
       })
-      .catch(console.error);
-
-    fetch("/regions/_national.json")
-      .then((r) => r.json() as Promise<NationalLayerConfig>)
-      .then(setLayerCfg)
       .catch(console.error);
 
     invoke<ExportHistoryEntry[]>("get_export_history", { projectId })
@@ -238,14 +245,19 @@ export function ExportTab({ projectId, isActive }: Props) {
       const fresh = await invoke<ProjectMeta>("get_project", { id: projectId });
       setProject(fresh);
 
-      const rasterLayers = collectRasterLayers(fresh.layers, layerCfg);
+      // The state can change on the Area tab, so reload its layer config too.
+      const cfg = await loadLayerConfig(fresh.state);
+      setLayerCfg(cfg);
+      const rasterLayers = collectRasterLayers(fresh.layers, cfg);
       if (rasterLayers.length === 0) {
         setStatus({ kind: "error", message: "No streamable layers are enabled. Enable at least the basemap and switch to Online mode." });
         return;
       }
 
       const plan = planPages(fresh);
-      const ctx: SpecContext = { project: fresh, plan, legend: collectLegend(fresh.layers, layerCfg) };
+      const ctx: SpecContext = { project: fresh, plan, legend: collectLegend(fresh.layers, cfg) };
+      setStatus({ kind: "rendering", detail: "Loading downloaded layers…" });
+      const draw: PageLayers = { rasterLayers, vectorLayers: await collectVectorLayers(fresh.state, fresh.layers, cfg) };
       const folder = outputFolder || null;
 
       if (plan.isMulti && outputMode === "per-sheet") {
@@ -255,7 +267,7 @@ export function ExportTab({ projectId, isActive }: Props) {
         let lastPath = "";
         for (let i = 0; i < sheetJobs.length; i++) {
           const job = sheetJobs[i];
-          const page = await renderPage(job, ctx, `Sheet ${job.cell!.ref} (${i + 1}/${sheetJobs.length})`, i, sheetJobs.length);
+          const page = await renderPage(job, ctx, draw, `Sheet ${job.cell!.ref} (${i + 1}/${sheetJobs.length})`, i, sheetJobs.length);
           if (!page) return;
           setStatus({ kind: "composing" });
           const pdfBytes = await buildMapPdf([page], fresh.name);
@@ -286,7 +298,7 @@ export function ExportTab({ projectId, isActive }: Props) {
           : job.kind === "sheet"
           ? `Rendering sheet ${job.cell!.ref} (${i + 1} of ${plan.pages.length})…`
           : "Rendering map tiles…";
-        const page = await renderPage(job, ctx, label, i, plan.pages.length);
+        const page = await renderPage(job, ctx, draw, label, i, plan.pages.length);
         if (!page) return;
         rendered.push(page);
       }
@@ -317,7 +329,7 @@ export function ExportTab({ projectId, isActive }: Props) {
 
   /** Renders one page's map raster; returns null if the export was cancelled. */
   async function renderPage(
-    job: PageJob, ctx: SpecContext, detail: string, current: number, total: number,
+    job: PageJob, ctx: SpecContext, draw: PageLayers, detail: string, current: number, total: number,
   ): Promise<RenderedPage | null> {
     if (abortRef.current) return null;
     setStatus({ kind: "rendering", detail, current, total });
@@ -328,7 +340,9 @@ export function ExportTab({ projectId, isActive }: Props) {
     const timeoutMs = Math.round(60_000 * Math.max(1, (pixelW * pixelH) / (base.pixelW * base.pixelH)));
     const jpegUrl = await renderMapImage({
       bounds: job.bounds, pixelW, pixelH,
-      rasterLayers: collectRasterLayers(ctx.project.layers, layerCfg!),
+      rasterLayers: draw.rasterLayers,
+      vectorLayers: draw.vectorLayers,
+      pxPerPt: dpi / 72,
       timeoutMs,
     });
     if (abortRef.current) return null;

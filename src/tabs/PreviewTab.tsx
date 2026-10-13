@@ -20,6 +20,7 @@ import {
 } from "../lib/mapJob";
 import type { MapPlan, SpecContext } from "../lib/mapJob";
 import type { NationalLayerConfig } from "../types/layers";
+import { collectVectorLayers, loadLayerConfig } from "../lib/layerData";
 import type { ProjectMeta } from "../types/project";
 import type { MapElements } from "../types/elements";
 import { normalizeElements, elementsEqual } from "../types/elements";
@@ -71,14 +72,10 @@ export function PreviewTab({ projectId, isActive }: Props) {
         setProject(p);
         // Keep unsaved checkbox edits across tab switches.
         setDraft((d) => d ?? normalizeElements(p.elements));
+        // National + the project's state layers; the state may have changed.
+        return loadLayerConfig(p.state).then((c) => { if (!cancelled) setLayerCfg(c); });
       })
       .catch(console.error);
-    if (!layerCfg) {
-      fetch("/regions/_national.json")
-        .then((r) => r.json() as Promise<NationalLayerConfig>)
-        .then((c) => { if (!cancelled) setLayerCfg(c); })
-        .catch(console.error);
-    }
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, projectId]);
@@ -93,6 +90,10 @@ export function PreviewTab({ projectId, isActive }: Props) {
       setRenderErr("No streamable layers are enabled. Enable a basemap in Online mode.");
       return;
     }
+
+    // Downloaded layers are read from disk; a layer that fails is skipped.
+    const vectors = await collectVectorLayers(proj.state, proj.layers, cfg);
+    if (seq !== renderSeq.current) return;
 
     const plan = planPages(proj);
     const ctx: SpecContext = { project: proj, plan, legend: collectLegend(proj.layers, cfg) };
@@ -109,6 +110,7 @@ export function PreviewTab({ projectId, isActive }: Props) {
       try {
         images[i] = await renderMapImage({
           bounds: job.bounds, pixelW, pixelH, rasterLayers: rasters,
+          vectorLayers: vectors, pxPerPt: PREV_DPI / 72,
           timeoutMs: Math.round(60_000 * Math.max(1, (pixelW * pixelH) / (base.pixelW * base.pixelH))),
         });
       } catch (e) {

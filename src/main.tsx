@@ -2,6 +2,7 @@
 import "./theme/theme.css";
 import "./index.css";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "./lib/maplibreWorker";
 
 import React from "react";
 import ReactDOM from "react-dom/client";

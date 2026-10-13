@@ -70,6 +70,7 @@ pub fn run() {
             data::get_download_progress,
             data::cancel_download,
             data::delete_layer_data,
+            data::read_layer_data,
             data::get_data_disk_usage,
         ])
         .run(tauri::generate_context!())

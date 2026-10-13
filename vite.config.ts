@@ -6,6 +6,8 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig({
   plugins: [react()],
   clearScreen: false,
+  // MapLibre's worker is loaded as a module worker (see src/lib/maplibreWorker.ts).
+  worker: { format: "es" },
   build: {
     // The frontend is embedded in the Tauri binary, so bundle size is app size.
     // Both builds run in WKWebView on macOS 12+, which is Safari 15 — targeting

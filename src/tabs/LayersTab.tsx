@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import * as maplibregl from "maplibre-gl";
 import { invoke } from "../lib/ipc";
 import { captureSaveEpoch, isSaveEpochCurrent, isStaleGenerationError } from "../lib/saveEpoch";
 import type {
   NationalLayerConfig,
-  StateLayerConfig,
   LayerConfig,
   LayerGroup,
   LayerSettings,
 } from "../types/layers";
-import { isLayerAvailable, mergeStateConfig } from "../types/layers";
+import { isLayerAvailable } from "../types/layers";
+import type { LayerManifestEntry } from "../types/data";
+import { isVectorLayer, listDownloaded, loadLayerConfig, loadLayerData, vectorStyleLayers } from "../lib/layerData";
 import type { ProjectMeta } from "../types/project";
 import type { Bounds } from "../lib/geo";
 import { printedBounds } from "../lib/mapJob";
@@ -60,6 +61,17 @@ export function LayersTab({ projectId, isActive, online, projectState, missingCo
   const [printArea, setPrintArea] = useState<Bounds | null>(null);
   const fittedKeyRef = useRef<string | null>(null);
 
+  // Downloaded vector layers for the project's state (Data screen), keyed by
+  // layer id. Re-read on every activation so a download finished elsewhere
+  // shows up without reopening the project.
+  const [downloaded, setDownloaded] = useState<Map<string, LayerManifestEntry>>(new Map());
+  const downloadedIds = useMemo(() => new Set(downloaded.keys()), [downloaded]);
+  // Bumped when a vector layer's data finishes loading, to re-run the sync.
+  const [vectorDataVersion, setVectorDataVersion] = useState(0);
+  // Map source id -> manifest version currently loaded into it.
+  const vectorLoadedRef = useRef<Map<string, string>>(new Map());
+  const [vectorError, setVectorError] = useState<string | null>(null);
+
   // Bumped after raster basemap sources/layers are added (see effect 4a), to
   // retrigger the visibility-sync effect for layers that didn't exist yet the
   // last time it ran.
@@ -106,33 +118,7 @@ export function LayersTab({ projectId, isActive, online, projectState, missingCo
     let cancelled = false;
 
     async function loadConfigs() {
-      // 1a. Always load national config.
-      const natRes = await fetch("/regions/_national.json");
-      if (!natRes.ok) throw new Error(`HTTP ${natRes.status} loading _national.json`);
-      let cfg: NationalLayerConfig = await natRes.json();
-
-      // 1b. If a state is selected, load its config and merge.
-      if (projectState) {
-        // Look up file name from the states manifest.
-        try {
-          const manifestRes = await fetch("/regions/_states.json");
-          if (manifestRes.ok) {
-            const manifest = await manifestRes.json();
-            const entry = manifest.states?.find((s: { id: string }) => s.id === projectState);
-            if (entry?.file) {
-              const stateRes = await fetch(`/regions/${entry.file}.json`);
-              if (stateRes.ok) {
-                const stateCfg: StateLayerConfig = await stateRes.json();
-                cfg = mergeStateConfig(cfg, stateCfg);
-              }
-            }
-          }
-        } catch {
-          // State config load failure is non-fatal — national layers still work.
-          console.warn(`Could not load state config for ${projectState}`);
-        }
-      }
-
+      const cfg = await loadLayerConfig(projectState);
       if (cancelled) return;
       setConfig(cfg);
       // Seed per-layer opacity defaults from merged config.
@@ -286,6 +272,16 @@ export function LayersTab({ projectId, isActive, online, projectState, missingCo
     }
   }, [isActive]);
 
+  // Re-read which layers have downloaded data on every activation.
+  useEffect(() => {
+    if (!isActive) return;
+    let cancelled = false;
+    listDownloaded(projectState).then((entries) => {
+      if (!cancelled) setDownloaded(new Map(entries.map((e) => [e.layerId, e])));
+    });
+    return () => { cancelled = true; };
+  }, [isActive, projectState]);
+
   // Re-read the print area on every activation.
   useEffect(() => {
     if (!isActive) return;
@@ -379,6 +375,67 @@ export function LayersTab({ projectId, isActive, online, projectState, missingCo
     // them, so this needs to re-run once they exist to show whichever one is
     // actually selected — it's otherwise unused, only bumped to retrigger this.
   }, [mapReady, activeBasemap, enabledLayers, opacities, basemapSourcesVersion]);
+
+  // ------------------------------------------------------------------
+  // 5b. Downloaded vector layers (state wildlife areas, hunt units, …)
+  // ------------------------------------------------------------------
+
+  // Sources are added lazily the first time a layer is switched on (the files
+  // can be tens of MB) and then only hidden/shown, so toggling stays instant.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || !config || !projectState) return;
+    const pxPerPt = 96 / 72;
+
+    for (const group of config.groups) {
+      for (const layer of group.layers) {
+        if (!isVectorLayer(layer)) continue;
+        const src = `dl-${layer.id}`;
+        const entry = downloaded.get(layer.id);
+        const want = !!entry && enabledLayers.has(layer.id);
+        const opacity = opacities[layer.id] ?? layer.defaultOpacity;
+        const specs = vectorStyleLayers(layer, src, opacity, pxPerPt);
+
+        if (want && vectorLoadedRef.current.get(src) !== entry!.downloadedAt) {
+          // (Re)load: first enable, or the file was re-downloaded.
+          const version = entry!.downloadedAt;
+          vectorLoadedRef.current.set(src, version);
+          loadLayerData(projectState, entry!)
+            .then((data) => {
+              // Superseded by a newer download, or the layer was reset.
+              if (vectorLoadedRef.current.get(src) !== version) return;
+              const m = mapRef.current;
+              if (!m) return;
+              const existing = m.getSource(src) as maplibregl.GeoJSONSource | undefined;
+              if (existing) existing.setData(data);
+              else m.addSource(src, { type: "geojson", data });
+              for (const spec of specs) {
+                if (m.getLayer(spec.id)) continue;
+                // Below the print-area outline so it stays readable on top.
+                m.addLayer(spec, m.getLayer("print-area-halo") ? "print-area-halo" : undefined);
+              }
+              setVectorError(null);
+              setVectorDataVersion((v) => v + 1);
+            })
+            .catch((e) => {
+              vectorLoadedRef.current.delete(src);
+              setVectorError(`Could not load ${layer.name}: ${e}`);
+            });
+          continue;
+        }
+
+        for (const spec of specs) {
+          if (!map.getLayer(spec.id)) continue;
+          map.setLayoutProperty(spec.id, "visibility", want ? "visible" : "none");
+          if (spec.type === "fill") map.setPaintProperty(spec.id, "fill-opacity", opacity);
+          if (spec.type === "line") {
+            map.setPaintProperty(spec.id, "line-opacity", layer.renderType === "fill" ? Math.min(1, opacity + 0.4) : opacity);
+          }
+          if (spec.type === "circle") map.setPaintProperty(spec.id, "circle-opacity", opacity);
+        }
+      }
+    }
+  }, [mapReady, config, projectState, downloaded, enabledLayers, opacities, vectorDataVersion]);
 
   // ------------------------------------------------------------------
   // 6. Offline gap overlay — hatched fill on counties with no local data
@@ -497,11 +554,14 @@ export function LayersTab({ projectId, isActive, online, projectState, missingCo
                   enabledLayers={enabledLayers}
                   opacities={opacities}
                   online={online}
+                  downloaded={downloadedIds}
                   onBasemapChange={handleBasemapChange}
                   onCheckboxChange={handleCheckboxChange}
                   onOpacityChange={handleOpacityChange}
                 />
               ))}
+
+            {vectorError && <div className="lyr-error">{vectorError}</div>}
 
             {/* Persistent land access disclaimer (§6.3). User may hide via Settings > Safety Warnings. */}
             {config && !hideDisclaimer && (
@@ -541,6 +601,7 @@ interface GroupProps {
   enabledLayers: Set<string>;
   opacities: Record<string, number>;
   online: boolean;
+  downloaded: ReadonlySet<string>;
   onBasemapChange: (id: string) => void;
   onCheckboxChange: (id: string, checked: boolean) => void;
   onOpacityChange: (id: string, val: number) => void;
@@ -552,6 +613,7 @@ function LayerGroupSection({
   enabledLayers,
   opacities,
   online,
+  downloaded,
   onBasemapChange,
   onCheckboxChange,
   onOpacityChange,
@@ -563,7 +625,7 @@ function LayerGroupSection({
       <div className="lyr-group-header">{group.label}</div>
 
       {group.layers.map((layer) => {
-        const available = isLayerAvailable(layer, online);
+        const available = isLayerAvailable(layer, online, downloaded);
         const checked = isRadio
           ? activeBasemap === layer.id
           : enabledLayers.has(layer.id);

@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.0.5] - Unreleased
+
+Prerelease — draws downloaded county data on the map.
+
+### Added
+- **Downloaded layers are drawn.** Layers fetched on the Data screen (State Wildlife Areas, Walk-In Access, State Trust Land, GMUs, WGFD hunt/access areas, …) can now be switched on in the Layers tab and appear on the map, in the Preview and in the exported PDF, styled from each layer's config (the same colours as its swatch and legend entry), with the per-layer opacity slider. Data is read back with a new `read_layer_data` command and cached per download. Layers that need a download stay disabled until they've been downloaded.
+- Preview and Export now load the project's **state** layer config as well as the national one, so state layers reach the legend and the print.
+
+### Fixed
+- **No GeoJSON overlay drew in the packaged app.** MapLibre v6 only locates its web worker itself when the page is served over http(s); the macOS app is served from `tauri://`, so every worker failed to load. This affected the print-area outline as well as the new layers. The worker is now bundled by Vite and registered explicitly (`src/lib/maplibreWorker.ts`).
+
+### Known limitation
+- Downloaded layers are drawn with each layer's fixed style; they aren't yet run through the land-access classification (the access rules expect PAD-US field names that these agency datasets don't use), so the Area tab's access-category overlay is still empty.
+
 ## [0.0.4] - 2026-10-12
 
 Prerelease — **Windows and macOS** (see the `windows` and `macos` tags). Fixes county data downloads.

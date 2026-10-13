@@ -118,8 +118,13 @@ export const LAYER_SETTINGS_DEFAULT: LayerSettings = {
 // Layers that can stream tiles live without any local download
 export const STREAMABLE_RENDER_TYPES = new Set<string>(["raster"]);
 
-export function isLayerAvailable(layer: LayerConfig, online: boolean): boolean {
-  if (layer.requiresDownload) return false; // needs local data regardless of online mode
+export function isLayerAvailable(
+  layer: LayerConfig,
+  online: boolean,
+  downloaded: ReadonlySet<string> = new Set(),
+): boolean {
+  // Needs local data regardless of online mode.
+  if (layer.requiresDownload) return downloaded.has(layer.id);
   if (layer.onlineOnly && !online) return false;
   return true;
 }

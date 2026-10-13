@@ -1,5 +1,7 @@
 import * as maplibregl from "maplibre-gl";
 import type { Bounds } from "./geo";
+import type { VectorLayer } from "./layerData";
+import { vectorStyleLayers } from "./layerData";
 
 export interface RasterLayer {
   id: string;
@@ -14,6 +16,10 @@ export interface RenderOptions {
   pixelH: number;
   /** Layers in draw order (index 0 = bottom). Only raster XYZ layers supported. */
   rasterLayers: RasterLayer[];
+  /** Downloaded vector layers, drawn above the rasters in the order given. */
+  vectorLayers?: VectorLayer[];
+  /** Output pixels per point (dpi / 72) — scales vector stroke widths. */
+  pxPerPt?: number;
   timeoutMs?: number;
 }
 
@@ -22,9 +28,9 @@ export interface RenderOptions {
  * The map is fitted exactly to `bounds` within `pixelW × pixelH` pixels at pixelRatio=1.
  */
 export async function renderMapImage(opts: RenderOptions): Promise<string> {
-  const { bounds, pixelW, pixelH, rasterLayers, timeoutMs = 40_000 } = opts;
+  const { bounds, pixelW, pixelH, rasterLayers, vectorLayers = [], pxPerPt = 1, timeoutMs = 40_000 } = opts;
 
-  if (rasterLayers.length === 0) {
+  if (rasterLayers.length === 0 && vectorLayers.length === 0) {
     throw new Error("No raster layers provided for map render");
   }
 
@@ -34,7 +40,7 @@ export async function renderMapImage(opts: RenderOptions): Promise<string> {
     "position:absolute;top:-999999px;left:-999999px;visibility:hidden;";
   document.body.appendChild(container);
 
-  const sources: Record<string, maplibregl.RasterSourceSpecification> = {};
+  const sources: Record<string, maplibregl.SourceSpecification> = {};
   const layers: maplibregl.LayerSpecification[] = [
     { id: "bg", type: "background", paint: { "background-color": "#f0ece5" } },
   ];
@@ -51,6 +57,12 @@ export async function renderMapImage(opts: RenderOptions): Promise<string> {
       source: rl.id,
       paint: rl.opacity != null ? { "raster-opacity": rl.opacity } : {},
     });
+  }
+
+  for (const vl of vectorLayers) {
+    const src = `dl-${vl.id}`;
+    sources[src] = { type: "geojson", data: vl.data };
+    layers.push(...vectorStyleLayers(vl.config, src, vl.opacity, pxPerPt));
   }
 
   let map: maplibregl.Map | null = null;

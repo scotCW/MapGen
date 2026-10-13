@@ -32,7 +32,7 @@ const project: ProjectMeta = {
   // 1:50,000 from the start, so any UI that shows "24,000" regardless is
   // caught immediately rather than needing a live scale change to notice.
   format: { ...FORMAT_DEFAULTS, scale: 50000 },
-  layers: { ...LAYER_SETTINGS_DEFAULT, enabledLayers: ["usfs_mvum", "land_access"] },
+  layers: { ...LAYER_SETTINGS_DEFAULT, enabledLayers: ["usfs_mvum", "land_access", "co_swa", "co_gmu"] },
   area: { centerLng: -105.5, centerLat: 40.5 },
   settingsGeneration: 0,
 };
@@ -51,6 +51,24 @@ function summary(p: ProjectMeta): ProjectSummary {
     forkedFromName: p.forkedFrom?.name ?? null,
     hasThumbnail: false,
   };
+}
+
+/** Synthetic downloaded data around the mock project's area. */
+function mockLayer(layerId: string): GeoJSON.FeatureCollection {
+  const { centerLng: x, centerLat: y } = project.area;
+  const box = (w: number, s: number, e: number, n: number): GeoJSON.Polygon => ({
+    type: "Polygon", coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]],
+  });
+  if (layerId === "co_swa") {
+    return { type: "FeatureCollection", features: [
+      { type: "Feature", properties: { NAME: "Mock SWA A" }, geometry: box(x - 0.12, y - 0.08, x - 0.02, y + 0.02) },
+      { type: "Feature", properties: { NAME: "Mock SWA B" }, geometry: box(x + 0.03, y + 0.01, x + 0.11, y + 0.07) },
+    ] };
+  }
+  return { type: "FeatureCollection", features: [
+    { type: "Feature", properties: { GMU: 1 }, geometry: box(x - 0.3, y - 0.2, x, y + 0.2) },
+    { type: "Feature", properties: { GMU: 2 }, geometry: box(x, y - 0.2, x + 0.3, y + 0.2) },
+  ] };
 }
 
 async function handle(cmd: string, args: Record<string, unknown> = {}): Promise<unknown> {
@@ -80,7 +98,12 @@ async function handle(cmd: string, args: Record<string, unknown> = {}): Promise<
       if (args.area) Object.assign(project.area, args.area);
       return project.settingsGeneration;
     case "list_downloaded_layers":
-      return [];
+      return ["co_swa", "co_gmu"].map((layerId) => ({
+        layerId, layerName: layerId, downloadedAt: "2026-10-01T00:00:00Z",
+        sizeBytes: 1024, sourceUrl: "mock://", isStale: false,
+      }));
+    case "read_layer_data":
+      return new TextEncoder().encode(JSON.stringify(mockLayer(String(args.layerId)))).buffer;
     case "list_snapshots":
       return [];
     case "list_presets":

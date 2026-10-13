@@ -456,6 +456,31 @@ pub fn cancel_download(ds: tauri::State<'_, Arc<DownloadState>>) -> Result<(), S
     Ok(())
 }
 
+/// Returns a downloaded layer's GeoJSON as raw bytes, for the map to draw.
+/// Sent as a binary IPC response so multi-megabyte state datasets aren't
+/// re-encoded as a JSON string on the way across.
+#[tauri::command]
+pub fn read_layer_data(
+    app: AppHandle,
+    state_id: String,
+    layer_id: String,
+) -> Result<tauri::ipc::Response, String> {
+    // Both ids become path components; refuse anything that could leave the
+    // state's data directory.
+    let safe = |s: &str| {
+        !s.is_empty()
+            && s.chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+    };
+    if !safe(&state_id) || !safe(&layer_id) {
+        return Err("Invalid layer id".into());
+    }
+    let dir = state_data_dir(&app, &state_id)?;
+    let file = dir.join(format!("{}.geojson", layer_id));
+    let bytes = std::fs::read(&file).map_err(|e| format!("{layer_id} is not downloaded ({e})"))?;
+    Ok(tauri::ipc::Response::new(bytes))
+}
+
 /// Removes a downloaded layer's file and manifest entry.
 #[tauri::command]
 pub fn delete_layer_data(app: AppHandle, state_id: String, layer_id: String) -> Result<(), String> {
