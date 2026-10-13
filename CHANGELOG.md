@@ -7,7 +7,7 @@ All notable changes to this project are documented here. Format loosely follows 
 Prerelease — draws downloaded county data on the map. **First Linux release** (see the `linux` tag), alongside macOS.
 
 ### Added
-- **Linux packages**: `.deb` (Ubuntu 22.04+/Debian 12+), `.rpm` (Fedora/RHEL/openSUSE) and a Flatpak (GNOME 47 runtime) for x86_64. `scripts/build-linux-docker.sh` builds all three from macOS in an Ubuntu 22.04 container; `build-linux.sh` gained `.rpm` output. The Flatpak's AppStream metadata now carries the real licence (Unlicense) and project links. README has Linux install instructions.
+- **Linux packages**: `.deb` (Ubuntu 22.04+/Debian 12+), `.rpm` (Fedora/RHEL/openSUSE), an AppImage (any distribution, no install) and a Flatpak (GNOME 47 runtime) for x86_64. `scripts/build-linux-docker.sh` builds all four from macOS in an Ubuntu 22.04 container; `build-linux.sh` gained `.rpm` output and clears stale bundles before building. The Flatpak's AppStream metadata now carries the real licence (Unlicense) and project links. README has Linux install instructions.
 - **Downloaded layers are drawn.** Layers fetched on the Data screen (State Wildlife Areas, Walk-In Access, State Trust Land, GMUs, WGFD hunt/access areas, …) can now be switched on in the Layers tab and appear on the map, in the Preview and in the exported PDF, styled from each layer's config (the same colours as its swatch and legend entry), with the per-layer opacity slider. Data is read back with a new `read_layer_data` command and cached per download. Layers that need a download stay disabled until they've been downloaded.
 - Preview and Export now load the project's **state** layer config as well as the national one, so state layers reach the legend and the print.
 

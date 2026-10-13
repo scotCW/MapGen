@@ -55,12 +55,15 @@ x86_64 (64-bit Intel/AMD). Download from the latest [Linux release](https://gith
 | `Hunting-Map-Generator-<version>-linux-amd64.deb` | Ubuntu 22.04+, Debian 12+, Linux Mint 21+, Pop!_OS | `sudo apt install ./Hunting-Map-Generator-<version>-linux-amd64.deb` |
 | `Hunting-Map-Generator-<version>-linux-x86_64.rpm` | Fedora, RHEL/Rocky/Alma 9+, openSUSE | `sudo dnf install ./Hunting-Map-Generator-<version>-linux-x86_64.rpm` (openSUSE: `sudo zypper install …`) |
 | `Hunting-Map-Generator-<version>-linux-x86_64.flatpak` | Any distribution with Flatpak (Arch, Steam Deck, older or immutable distros) | `flatpak install --user ./Hunting-Map-Generator-<version>-linux-x86_64.flatpak` |
+| `Hunting-Map-Generator-<version>-linux-x86_64.AppImage` | Any distribution, no install or root needed | `chmod +x Hunting-Map-Generator-<version>-linux-x86_64.AppImage` then run it |
+
+**Which one?** Prefer the `.deb`/`.rpm` on distributions that have them, then the Flatpak (sandboxed, updates its own runtime). The AppImage is a single portable file with no sandbox and no app-menu entry unless you use a helper such as AppImageLauncher. It needs FUSE 2 (`libfuse2`, called `libfuse2t64` on Ubuntu 24.04); without it, run it with `--appimage-extract-and-run`. If its window opens blank, start it with `WEBKIT_DISABLE_DMABUF_RENDERER=1` (a known WebKitGTK and GPU-driver mismatch with bundled WebKit), or use another package.
 
 The `.deb` and `.rpm` need **WebKitGTK 4.1** (`libwebkit2gtk-4.1`), which the package manager pulls in automatically. Ubuntu 20.04 and other distributions without it should use the Flatpak. The Flatpak brings its own runtime (GNOME 47); if Flathub isn't configured yet, add it first with `flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo` so the runtime can be fetched. Launch the app from your desktop's app menu, or run `hunting-map-generator` (deb/rpm) or `flatpak run com.huntingmapgenerator.app` (Flatpak) from a terminal.
 
-**Where your data lives:** `~/.local/share/com.huntingmapgenerator.app/` for the deb/rpm, and `~/.var/app/com.huntingmapgenerator.app/data/com.huntingmapgenerator.app/` for the Flatpak. The Flatpak can write exported PDFs only to your Documents and Downloads folders (and to folders you pick in a file dialog). Uninstalling leaves your data in place.
+**Where your data lives:** `~/.local/share/com.huntingmapgenerator.app/` for the deb/rpm/AppImage, and `~/.var/app/com.huntingmapgenerator.app/data/com.huntingmapgenerator.app/` for the Flatpak. The Flatpak can write exported PDFs only to your Documents and Downloads folders (and to folders you pick in a file dialog). Uninstalling leaves your data in place.
 
-**Uninstall:** `sudo apt remove hunting-map-generator`, `sudo dnf remove hunting-map-generator`, or `flatpak uninstall com.huntingmapgenerator.app`.
+**Uninstall:** `sudo apt remove hunting-map-generator`, `sudo dnf remove hunting-map-generator`, `flatpak uninstall com.huntingmapgenerator.app`, or just delete the AppImage file.
 
 The packages are **not signed**. Build them yourself from source with `./scripts/build-linux.sh` on Ubuntu, or `./scripts/build-linux-docker.sh` from macOS or any Docker host (see [BUILDING.md](BUILDING.md#linux-packages)).
 

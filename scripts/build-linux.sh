@@ -81,6 +81,9 @@ fi
 command -v cargo >/dev/null || { echo "error: cargo not found — install Rust from https://rustup.rs" >&2; exit 1; }
 
 echo "==> Building frontend + Tauri bundles"
+# Start from an empty bundle dir: the Flatpak step packages whichever .deb it
+# finds there, so a leftover from an older version must not be picked up.
+rm -rf src-tauri/target/release/bundle
 # `tauri build` runs the frontend build itself via beforeBuildCommand.
 BUNDLES=deb,rpm
 if [[ "$WANT_APPIMAGE" == "1" ]]; then

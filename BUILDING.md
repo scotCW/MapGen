@@ -75,13 +75,13 @@ Targets **x86_64 Ubuntu 22.04+**, with a Flatpak for other distributions.
 
 > **Linux packages can't be cross-compiled from macOS.** Tauri links against the system GTK and WebKitGTK libraries, so the build has to run on Linux: an Ubuntu machine, VM, CI runner, or the Docker container below.
 
-**From macOS (or any Docker host)** — builds the `.deb`, `.rpm` and Flatpak in an x86_64 Ubuntu 22.04 container and copies them to `dist-linux/`:
+**From macOS (or any Docker host)** — builds the `.deb`, `.rpm`, AppImage and Flatpak in an x86_64 Ubuntu 22.04 container and copies them to `dist-linux/`:
 
 ```bash
 ./scripts/build-linux-docker.sh
 ```
 
-It builds the committed `HEAD` (via `git archive`), not uncommitted changes. On Apple Silicon give Docker Rosetta x86_64 emulation, e.g. `colima start --vm-type vz --vz-rosetta`; under plain QEMU the Rust build is very slow. The container runs `--privileged` because `flatpak-builder` sandboxes its build steps with bubblewrap. Cargo, Yarn and Flatpak runtime downloads are cached in Docker volumes (`mapgen-*`), so rebuilds are much faster.
+It builds the committed `HEAD` (via `git archive`), not uncommitted changes. On Apple Silicon give Docker Rosetta x86_64 emulation, e.g. `colima start --vm-type vz --vz-rosetta`; under plain QEMU the Rust build is very slow. The container runs `--privileged` because `flatpak-builder` sandboxes its build steps with bubblewrap. Cargo downloads and build output, the Yarn cache and the Flatpak runtime are kept in Docker volumes (`mapgen-*`), so rebuilds are much faster. Remove them with `docker volume rm mapgen-cargo-registry mapgen-cargo-target mapgen-yarn-cache mapgen-flatpak`.
 
 **On Ubuntu directly:**
 
@@ -103,7 +103,7 @@ Output lands in `src-tauri/target/release/bundle/`:
 |---|---|
 | `deb/*.deb` | Ubuntu / Debian — `sudo apt install ./<file>.deb` |
 | `rpm/*.rpm` | Fedora / RHEL / openSUSE — `sudo dnf install ./<file>.rpm` |
-| `appimage/*.AppImage` | Only with `--appimage`. Portable, no install — `chmod +x` and run |
+| `appimage/*.AppImage` | Only with `--appimage` (the Docker build always includes it). Portable, no install — `chmod +x` and run. Built with linuxdeploy; `APPIMAGE_EXTRACT_AND_RUN=1` is set so it builds without FUSE |
 | `hunting-map-generator.flatpak` | Every other distro — `flatpak install --user <file>.flatpak` |
 
 **Ubuntu 22.04 is the minimum** because Tauri v2 requires `webkit2gtk-4.1`, which is not packaged for 20.04. Build on the oldest release you intend to support: the resulting binary's glibc requirement is set by the build host, so a 22.04 build runs on 24.04 but not the reverse.
