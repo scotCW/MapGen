@@ -31,6 +31,15 @@ git archive --format=tar HEAD | docker run --rm -i --privileged --platform linux
     set -euo pipefail
     mkdir -p /build && cd /build && tar -x
     yarn install --frozen-lockfile
+    # AppImages carry a magic marker in bytes 8-10 of their ELF header, which
+    # makes x86_64 emulation (Rosetta/QEMU binfmt) reject them with "Exec
+    # format error". Tauri zeroes it on linuxdeploy but not on the AppImage
+    # output plugin, so pre-seed the bundler cache with a patched copy.
+    mkdir -p /root/.cache/tauri
+    p=/root/.cache/tauri/linuxdeploy-plugin-appimage.AppImage
+    curl -fsSL -o "$p" https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage
+    chmod +x "$p"
+    printf "\0\0\0" | dd of="$p" bs=1 seek=8 count=3 conv=notrunc 2>/dev/null
     ./scripts/build-linux.sh --appimage --flatpak-direct --system
     # build-linux.sh empties the bundle dir first, so only this build is here.
     b=src-tauri/target/release/bundle
