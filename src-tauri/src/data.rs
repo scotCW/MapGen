@@ -366,3 +366,22 @@ pub fn get_data_disk_usage(app: AppHandle) -> Result<DataDiskUsage, String> {
         data_dir: root.to_string_lossy().into_owned(),
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The frontend sends `items` exactly like this (src/types/data.ts
+    /// DownloadItem). Tauri only renames top-level command arguments, so the
+    /// nested fields must deserialize from camelCase themselves — before
+    /// 0.0.4 this failed with "missing field `layer_id`" and every download
+    /// was rejected.
+    #[test]
+    fn download_items_deserialize_from_frontend_camel_case() {
+        let json = r#"[{"layerId":"padus","layerName":"PAD-US","downloadUrl":"https://example.com/a.geojson"}]"#;
+        let items: Vec<DownloadItem> = serde_json::from_str(json).expect("camelCase payload");
+        assert_eq!(items[0].layer_id, "padus");
+        assert_eq!(items[0].layer_name, "PAD-US");
+        assert_eq!(items[0].download_url, "https://example.com/a.geojson");
+    }
+}

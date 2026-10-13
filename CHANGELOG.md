@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.0.4] - 2026-10-12
+
+Prerelease — **Windows and macOS** (see the `windows` and `macos` tags). Fixes county data downloads.
+
+### Fixed
+- **"Download Selected" always failed** with `missing field layer_id`. Tauri only converts top-level command argument names; the nested `DownloadItem` fields arrived as `layerId`/`layerName`/`downloadUrl` and didn't deserialize. `DownloadItem` now renames its fields to camelCase. Before 0.0.2 the failure was silent ("nothing happens"); 0.0.2–0.0.3 showed the error but still couldn't download. Affects every earlier release on both platforms.
+- macOS capability schema (`src-tauri/gen/schemas/macOS-schema.json`) regenerated for Tauri 2.11.6 — generated output, no behaviour change.
+
 ## [0.0.3] - 2026-10-11
 
 Prerelease — **Windows and macOS** (see the `windows` and `macos` tags). Dependency update; no app behaviour changes beyond what the upgraded libraries bring.
