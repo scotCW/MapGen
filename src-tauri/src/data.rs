@@ -66,6 +66,7 @@ pub struct DataDiskUsage {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DownloadItem {
     pub layer_id: String,
     pub layer_name: String,
