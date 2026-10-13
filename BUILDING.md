@@ -73,17 +73,28 @@ Minimum macOS target is **12.0** (set in `tauri.conf.json` and `Package.swift`).
 
 Targets **x86_64 Ubuntu 22.04+**, with a Flatpak for other distributions.
 
-> **Linux packages cannot be built from macOS.** Tauri links against the system GTK and WebKitGTK libraries, so there is no supported cross-compile path. Build on an Ubuntu machine, VM, container, or CI runner.
+> **Linux packages can't be cross-compiled from macOS.** Tauri links against the system GTK and WebKitGTK libraries, so the build has to run on Linux: an Ubuntu machine, VM, CI runner, or the Docker container below.
+
+**From macOS (or any Docker host)** — builds the `.deb`, `.rpm` and Flatpak in an x86_64 Ubuntu 22.04 container and copies them to `dist-linux/`:
 
 ```bash
-# On Ubuntu — install prerequisites, then build .deb + AppImage
+./scripts/build-linux-docker.sh
+```
+
+It builds the committed `HEAD` (via `git archive`), not uncommitted changes. On Apple Silicon give Docker Rosetta x86_64 emulation, e.g. `colima start --vm-type vz --vz-rosetta`; under plain QEMU the Rust build is very slow. The container runs `--privileged` because `flatpak-builder` sandboxes its build steps with bubblewrap. Cargo, Yarn and Flatpak runtime downloads are cached in Docker volumes (`mapgen-*`), so rebuilds are much faster.
+
+**On Ubuntu directly:**
+
+```bash
+# Install prerequisites, then build .deb + .rpm
 ./scripts/build-linux.sh --deps
 
 # Subsequent builds
 ./scripts/build-linux.sh
 
-# Also build and install a Flatpak
+# Also build and install a Flatpak / an AppImage
 ./scripts/build-linux.sh --flatpak
+./scripts/build-linux.sh --appimage
 ```
 
 Output lands in `src-tauri/target/release/bundle/`:
@@ -91,7 +102,8 @@ Output lands in `src-tauri/target/release/bundle/`:
 | File | Use |
 |---|---|
 | `deb/*.deb` | Ubuntu / Debian — `sudo apt install ./<file>.deb` |
-| `appimage/*.AppImage` | Portable, no install — `chmod +x` and run |
+| `rpm/*.rpm` | Fedora / RHEL / openSUSE — `sudo dnf install ./<file>.rpm` |
+| `appimage/*.AppImage` | Only with `--appimage`. Portable, no install — `chmod +x` and run |
 | `hunting-map-generator.flatpak` | Every other distro — `flatpak install --user <file>.flatpak` |
 
 **Ubuntu 22.04 is the minimum** because Tauri v2 requires `webkit2gtk-4.1`, which is not packaged for 20.04. Build on the oldest release you intend to support: the resulting binary's glibc requirement is set by the build host, so a 22.04 build runs on 24.04 but not the reverse.
