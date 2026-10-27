@@ -34,7 +34,7 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 tokio = { version = "1", features = ["sync"] }
 # Already in the tree via tauri-plugin-sql; used directly only to repair the
 # migration checksum before the plugin opens the catalog (src/migrations.rs).
-sqlx = { version = "0.8", default-features = false, features = ["sqlite", "runtime-tokio"] }
+sqlx = { version = "0.9", default-features = false, features = ["sqlite", "runtime-tokio"] }
 sha2 = "0.11"
 
 [features]
