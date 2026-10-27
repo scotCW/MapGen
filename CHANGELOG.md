@@ -2,7 +2,23 @@
 
 All notable changes to this project are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [0.0.5] - Unreleased
+## [0.0.5.1] - 2026-10-26
+
+Prerelease — **macOS and Linux only** (see the `macos` and `linux` tags; there is no Windows build of this release, so the `windows` tag stays on 0.0.5). Dependency update; no app behaviour changes beyond what the upgraded libraries bring.
+
+The app's own version is `0.0.5+1`: Cargo, Tauri and npm require three-part semver, so the fourth number is carried as build metadata. Debian and RPM order it after 0.0.5, so the Linux packages upgrade in place.
+
+### Security
+- `vite` 8.3.2→8.3.4 (#31) fixes six advisories in the Vite dev server and its `launch-editor` dependency (GHSA-rq7h-c2jc-7f22, GHSA-9jrq-w75r-8gcw, GHSA-vfpm-58rq-9qcg, GHSA-587h-7wmj-h5pm, GHSA-r825-w8mm-5pxw, GHSA-698v-4r3x-3vcv). They affect development machines only — Vite is not part of the shipped app.
+
+### Dependencies
+Merged Dependabot PRs, verified together (typecheck, Rust tests, clippy with `-D warnings`, fmt, and a full `tauri build`):
+- Rust (#30): `tauri` 2.12.1→2.12.2, `tauri-build` 2.7.1→2.7.2, `tauri-plugin-dialog` 2.8.1→2.8.3, `tauri-plugin-opener` 2.7.0→2.7.2, `tauri-plugin-shell` 2.4.0→2.5.0, `tauri-plugin-sql` 2.5.0→2.6.0, `serde_json` 1.0.151→1.0.154, `uuid` 1.27.0→1.28.0, `tokio` 1.53.2→1.53.3.
+- npm (#31): `@tauri-apps/api` 2.12.1→2.12.4, `@tauri-apps/cli` 2.12.1→2.12.3, `@tauri-apps/plugin-dialog` 2.8.1→2.8.3, `@tauri-apps/plugin-sql` 2.5.0→2.6.0, `maplibre-gl` 6.11.2→6.14.0, `react`/`react-dom` 19.3.0→19.3.1, `@vitejs/plugin-react` 6.1.1→6.1.2, `vite` 8.3.2→8.3.4. #30 and #31 must land together — `tauri build` refuses mismatched plugin versions.
+- `sha2` 0.10.9→0.11.0 (#26) and `sqlx` 0.8.6→0.9.0 (#28), both used only by the catalog migration-checksum repair (`src-tauri/src/migrations.rs`). `tauri-plugin-sql` itself still uses sqlx 0.8, so both versions are linked until it moves to 0.9; they share one `libsqlite3-sys`.
+- Closed #32 (`vite` 8.3.3), superseded by #31.
+
+## [0.0.5] - 2026-10-12
 
 Prerelease — draws downloaded county data on the map. **First Linux release** (see the `linux` tag), alongside macOS.
 
